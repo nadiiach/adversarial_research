@@ -1,5 +1,5 @@
 import os, torch, shutil
-from utils import parallelfolder, renormalize, pbar
+from netdissect import parallelfolder, renormalize, pbar
 from torchvision import transforms
 
 class AverageMeter(object):
@@ -156,7 +156,9 @@ def resume_training(args, best_filename, results_dir,
     model.load_state_dict(checkpoint['state_dict'])
     optimizer.load_state_dict(checkpoint['optimizer'])
     scheduler.load_state_dict(checkpoint['scheduler'])
-    best['val_accuracy'] = checkpoint['accuracy']
+    best['val_accuracy'] = checkpoint['accuracy'] # is this correct>
+    print("Finished resuming training!")
+    print("Resumed iter_num={}".format(iter_num))
     return iter_num
 
 def get_last_iter(results_dir):
@@ -165,7 +167,8 @@ def get_last_iter(results_dir):
     try:
         iters = []
         for it in files:
-            x = int(it.split("_")[1])
+            x = int(it.split("_")[1]) if "best" not in it \
+                else int(it.split("_")[2])
             iters.append(x)
 
     except Exception as e:

@@ -20,11 +20,14 @@ snapshot_iters = [
 
 def main(args):
     print("Training vgg16...")
-    results_dir = 'results/%svgg16/%s-%2g-b%d-i%s-d%d-g%d-w%g-%s-m%g-it%d' % (
+    results_dir = 'results/{}alexnet/{}--init{}-batch{}-init_method{}' \
+                  '-drop{}-groups{}-wd{}-optim{}-mom{}-iters{}-w_{}'.format(
             args.prefix, args.dataset, args.init_lr, args.batch_size,
-            args.init_method, args.dropout, args.groups,
+            args.init_method,
+            args.dropout, args.groups,
             args.weight_decay, args.optimizer, args.momentum,
-            args.iters)
+            args.iters, str(args.w) if len(args.w) > 0 else "standard"
+    )
 
     print("results_dir={}".format(results_dir))
     training_dir = '%s/%s/train' % (args.ds_root, args.dataset)
@@ -168,7 +171,7 @@ if __name__ == '__main__':
         aa('--results_dir', default='results')
         aa('--dirname', default='vgg16')  # override on commandline if needed
         aa('--prefix', type='str', default='')
-        aa('--w', nargs="+", default=[])
+        aa('--w', nargs="+", type=int, default=[])
         args = parser.parse_args()
         return args
 

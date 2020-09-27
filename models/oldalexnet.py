@@ -9,13 +9,24 @@ import torch.nn.functional as F
 from collections import OrderedDict
 import torchvision.transforms
 import numpy
-from utils import nethook
+from netdissect import nethook
 
 def load_places_alexnet(weight_file):
     model = AlexNet()
     state_dict = torch.load(weight_file)
     model.load_state_dict(state_dict)
     return model
+
+# class AlexNetH(nn.Sequential):
+#     def __init__(self, underlying=None):
+#         features = nethook.subsequence(underlying, upto_layer='pool5')
+#         pool = nethook.subsequence(underlying, first_layer='pool5', last_layer='flatten')
+#         classifier = nethook.subsequence(underlying, after_layer='flatten')
+#         super().__init__(OrderedDict([
+#             ('features', features),
+#             ('pool', pool),
+#             ('classifier', classifier)
+#         ]))
 
 class AlexNetH(nn.Sequential):
     def __init__(self, underlying=None):

@@ -1,5 +1,7 @@
 import argparse
-from models import train_alexnet, train_vgg, train_resnet
+from net.models import train_alexnet, train_vgg, train_resnet
+
+
 
 def parseargs():
     parser = argparse.ArgumentParser()
@@ -24,7 +26,7 @@ def parseargs():
     aa('--model', choices=['alexnet', 'vgg', 'resnet18',
                                             'resnet50'], required=True)
     aa('--prefix', type=str, default="")
-    aa('--w', nargs="+", default=[])
+    aa('--w', nargs="+", type=int, default=[])
     args = parser.parse_args()
     return args
 

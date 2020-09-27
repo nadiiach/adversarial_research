@@ -2,7 +2,7 @@
 
 import torch, os, shutil, torchvision, argparse
 from net.models import flexresnet
-from utils import parallelfolder, renormalize, pbar
+from netdissect import parallelfolder, renormalize, pbar
 from torchvision import transforms
 
 # [int(0.5 + math.pow(2, 0.25 * i)) for i in range(100)]

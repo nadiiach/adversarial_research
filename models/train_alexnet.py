@@ -26,11 +26,14 @@ snapshot_iters = [
 ]
 
 def main(args):
-    results_dir = 'results/%salexnet/%s-%2g-b%d-i%s-d%d-g%d-w%g-%s-m%g-it%d' % (
-            args.prefix, args.dataset, args.init_lr, args.batch_size, args.init_method,
+    results_dir = 'results/{}alexnet/{}--init{}-batch{}-init_method{}' \
+                  '-drop{}-groups{}-wd{}-optim{}-mom{}-iters{}-w_{}'.format(
+            args.prefix, args.dataset, args.init_lr, args.batch_size,
+            args.init_method,
             args.dropout, args.groups,
             args.weight_decay, args.optimizer, args.momentum,
-            args.iters)
+            args.iters, str(args.w) if len(args.w) > 0 else "standard"
+    )
     print("results_dir={}".format(results_dir))
 
     training_dir = '%s/%s/train' % (args.ds_root, args.dataset)
@@ -149,9 +152,8 @@ if __name__ == '__main__':
         aa('--groups', type=int, choices=[0, 1], default=1)
         aa('--keep', type=int, default=1)
         aa('--resume', type=str, default="best")
-        aa('--w', nargs='+', default=[])
         aa('--prefix', type=str, default='')
-        aa('--w', nargs="+", default=[])
+        aa('--w', nargs="+", type=int, default=[])
         args = parser.parse_args()
         return args
 

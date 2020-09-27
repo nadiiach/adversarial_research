@@ -1,7 +1,7 @@
 # Training program for alexnet.
 
 import torch, numpy, os, shutil, math, re, torchvision, argparse
-from utils import parallelfolder, renormalize, pbar
+from netdissect import parallelfolder, renormalize, pbar
 from torchvision import transforms
 from net.models import train_utils
 torch.backends.cudnn.benchmark = True
@@ -25,12 +25,14 @@ def main(args):
     else:
         print("Training resnet18...")
 
-    results_dir = 'results/%s%s/%s-%2g-b%d-i%s-w%g-%s-m%g-it%d' % (
-            args.prefix, args.model,
-            args.dataset, args.init_lr, args.batch_size * args.batch_accum,
-            args.init_method,
-            args.weight_decay, args.optimizer, args.momentum,
-            args.iters)
+    results_dir = 'results/{}alexnet/{}--init{}-batch{}-init_method{}' \
+                  '-drop{}-groups{}-wd{}-optim{}-mom{}-iters{}-w_{}'.format(
+        args.prefix, args.dataset, args.init_lr, args.batch_size,
+        args.init_method,
+        args.dropout, args.groups,
+        args.weight_decay, args.optimizer, args.momentum,
+        args.iters, str(args.w) if len(args.w) > 0 else "standard"
+    )
 
     training_dir = '%s/%s/train' % (args.ds_root, args.dataset)
     val_dir = '%s/%s/val' % (args.ds_root, args.dataset)
@@ -156,7 +158,7 @@ if __name__ == '__main__':
         aa('--resume', type=int, default=0)
         aa('--keep', type=int, default=0)
         aa('--prefix', type=str, default="")
-        aa('--w', nargs="+", default=[])
+        aa('--w', nargs="+", type=int, default=[])
         args = parser.parse_args()
         return args
     args = parseargs()
