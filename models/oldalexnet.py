@@ -34,7 +34,7 @@ class AlexNet(nn.Sequential):
         _w = [3, 96, 256, 384, 384, 256, 4096, 4096, 365]
 
         if w is not None and len(w) > 0:
-            for i in range(len(_w)):
+            for i in range(len(w)):
                 _w[i] = w[i]
         w = _w
 
