@@ -62,13 +62,8 @@ def make_layers(cfg, batch_norm=False):
 
 
 cfgs = {
-    'A': [64, 'M', 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M'],
-    'B': [64, 64, 'M', 128, 128, 'M', 256, 256, 'M', 512, 512, 'M', 512,
-          512, 'M'],
     'D': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 512, 512, 512, 'M',
           512, 512, 512, 'M'],
-    'E': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 256, 'M', 512, 512, 512,
-          512, 'M', 512, 512, 512, 512, 'M'],
 }
 
 
@@ -79,6 +74,14 @@ def _vgg(arch, cfg, batch_norm, pretrained, progress, w=None, **kwargs):
     if w is None or len(w) == 0:
         model = VGG(make_layers(cfgs[cfg], batch_norm=batch_norm), **kwargs)
     else:
+        _w = cfgs[cfg]
+        nex = 0
+        for i, item in enumerate(_w):
+            if isinstance(item, int):
+                _w[i] = w[nex]
+                nex += 1
+        assert nex == len(w)
+        w = _w
         model = VGG(make_layers(w, batch_norm=batch_norm), **kwargs)
 
     if pretrained:
