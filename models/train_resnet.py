@@ -25,9 +25,9 @@ def main(args):
     else:
         print("Training resnet18...")
 
-    results_dir = 'results/{}alexnet/{}--init{}-batch{}-init_method{}' \
+    results_dir = 'results/{}{}/{}--init{}-batch{}-init_method{}' \
                   '-drop{}-groups{}-wd{}-optim{}-mom{}-iters{}-w_{}'.format(
-        args.prefix, args.dataset, args.init_lr, args.batch_size,
+        args.prefix, args.model, args.dataset, args.init_lr, args.batch_size,
         args.init_method,
         args.dropout, args.groups,
         args.weight_decay, args.optimizer, args.momentum,

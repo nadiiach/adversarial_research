@@ -26,14 +26,15 @@ snapshot_iters = [
 ]
 
 def main(args):
-    results_dir = 'results/{}alexnet/{}--init{}-batch{}-init_method{}' \
+    results_dir = 'results/{}{}/{}--init{}-batch{}-init_method{}' \
                   '-drop{}-groups{}-wd{}-optim{}-mom{}-iters{}-w_{}'.format(
-            args.prefix, args.dataset, args.init_lr, args.batch_size,
-            args.init_method,
-            args.dropout, args.groups,
-            args.weight_decay, args.optimizer, args.momentum,
-            args.iters, str(args.w) if len(args.w) > 0 else "standard"
+        args.prefix, args.model, args.dataset, args.init_lr, args.batch_size,
+        args.init_method,
+        args.dropout, args.groups,
+        args.weight_decay, args.optimizer, args.momentum,
+        args.iters, str(args.w) if len(args.w) > 0 else "standard"
     )
+    
     print("results_dir={}".format(results_dir))
 
     training_dir = '%s/%s/train' % (args.ds_root, args.dataset)
