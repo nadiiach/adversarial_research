@@ -1,11 +1,14 @@
 from torchvision import transforms
-from grad_experiments.testing import parallelfolder
+from utils import parallelfolder
 import torch
 import pathlib
 import os
 from os.path import join, exists
-from net.models.mini_models import oldvgg16
-from net.models.mini_models.oldalexnet import AlexNet, AlexNetH
+from models import oldvgg16
+from models.oldalexnet import AlexNet, AlexNetH
+from models.softalexnet import AlexNet as SoftAlexNet
+from models.softalexnet import AlexNetH as SoftAlexNetH
+from models import softresnet, softvgg
 import torchvision
 import matplotlib.pyplot as plt
 
@@ -207,9 +210,10 @@ def get_batch_of_images(loader):
         orig_images.append(get_image_from_tensor(img))
     return image_batch, labels, paths, name_arr, cat_arr, orig_images
 
-def get_model_arg(model_name, it, logger=None):
+def get_model_arg(model_name, it, longtrain=True, logger=None):
     cpname = "iter_{}_weights.pth".format(it)
-    cp = join("checkpoints", model_name, cpname)
+    cp = join("checkpoints", "long_train" if longtrain else "short_train",
+              model_name, cpname)
 
     if logger is not None:
         logger.debug("Loading checkpoint {}".format(cp))
@@ -220,22 +224,39 @@ def get_model_arg(model_name, it, logger=None):
         model = oldvgg16.vgg16(num_classes=365)  # load_original_vgg16()
         model.load_state_dict(checkpoint['state_dict'])
 
+    elif model_name == "softvgg16":
+        model = softvgg.vgg16(num_classes=365)  # load_original_vgg16()
+        model.load_state_dict(checkpoint['state_dict'])
+
     elif model_name == "alexnet" or model_name == "alexnet-long":
         model = AlexNet(num_classes=365)
         model.load_state_dict(checkpoint['state_dict'])
         model = AlexNetH(model)
 
+    elif model_name == "softalexnet":
+        model = SoftAlexNet(num_classes=365)
+        model.load_state_dict(checkpoint['state_dict'])
+        model = SoftAlexNetH(model)
+
     elif model_name == 'resnet50':
         model = torchvision.models.resnet50(num_classes=365)
+        model.load_state_dict(checkpoint['state_dict'])
+
+    elif model_name == 'softresnet50':
+        model = softresnet.resnet18(num_classes=365)
         model.load_state_dict(checkpoint['state_dict'])
 
     elif model_name == 'resnet18' or model_name == 'resnet18-forever' \
             or model_name == 'resnet18-long':
         model = torchvision.models.resnet18(num_classes=365)
         model.load_state_dict(checkpoint['state_dict'])
+
+    elif model_name == 'softresnet18':
+        model = softresnet.resnet18(num_classes=365)
+        model.load_state_dict(checkpoint['state_dict'])
+
     else:
         raise Exception("Wrong model name {}".format(model_name))
-
     return model
 
 
