@@ -192,7 +192,9 @@ def run_compare_four_models(mods):
                     raw, clipped, is_adv, _ = run_attacks(model, it,
                                                           imb, lbls,
                                                           attack_name=attack)
-
+                print("epsilons ", epsilons)
+                print("robust_accuracy ", robust_accuracy)
+                
                 logger.debug("epsilons: {}".format(epsilons))
                 logger.debug("robust_accuracy: {}".format(robust_accuracy))
                 ax.plot(epsilons, robust_accuracy, label=str(model))
