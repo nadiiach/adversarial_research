@@ -140,23 +140,19 @@ def run_long_model():
     plt.show()
 
 
-def run_compare_models():
+def run_compare_four_models(mods):
     # dic = uf.get_available_iters_and_weights_paths("resnet18-forever")
     # print(dic)
     # print(sorted(dic.keys()))
     # exit()
     attacks = ["FGSM", "PGD", "BasicIterativeAttack", "DeepFoolAttack"]
     global logger
-    mod1 = "resnet18"
-    mod2 = "resnet50"
-    mod3 = "vgg16"
-    mod4 = "alexnet"
-    mods = [mod1, mod2, mod3, mod4]
 
+    assert len(mods) == 4
     image_batch, labels, orig_paths, \
-        names, cats, orig_images, catlist = get_batch(mod3)
+        names, cats, orig_images, catlist = get_batch("vgg16")
     image_batch_alex, labels_alex, orig_paths_alex, \
-        names_alex, cats_alex, orig_images_alex, catlist = get_batch(mod4)
+        names_alex, cats_alex, orig_images_alex, catlist = get_batch("alexnet")
 
     it = 131072
 
@@ -202,7 +198,6 @@ def run_compare_models():
                 ax.plot(epsilons, robust_accuracy, label=str(model))
 
             ax.legend()
-
     plt.show()
 
 def run_func_of_iters():
