@@ -127,7 +127,8 @@ def load_dataset(data_dir_path, crop_size, paths=(),
                                                classification=classification,
                                                shuffle=shuffle,
                                                transform=g_places_transform,
-                                               paths=paths)
+                                               paths=paths
+                                               )
 
 
 def get_dataloader(data_dir_path, crop_size,
