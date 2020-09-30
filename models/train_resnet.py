@@ -5,6 +5,7 @@ from netdissect import parallelfolder, renormalize, pbar
 from torchvision import transforms
 from net.models import train_utils
 torch.backends.cudnn.benchmark = True
+from net.models import softresnet
 
 # [int(0.5 + math.pow(2, 0.25 * i)) for i in range(100)]
 snapshot_iters = [
@@ -52,6 +53,10 @@ def main(args):
         model = torchvision.models.resnet50(num_classes=num_classes)
     elif args.model == 'resnet18':
         model = torchvision.models.resnet18(num_classes=num_classes)
+    elif args.model == 'softresnet18':
+        model = softresnet.resnet18(num_classes=num_classes)
+    elif args.model == 'softresnet50':
+        model = softresnet.resnet50(num_classes=num_classes)
 
     apply_init(model, args.init_method)
     model.train()

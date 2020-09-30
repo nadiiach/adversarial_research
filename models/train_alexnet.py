@@ -34,7 +34,7 @@ def main(args):
         args.weight_decay, args.optimizer, args.momentum,
         args.iters, str(args.w) if len(args.w) > 0 else "standard"
     )
-    
+
     print("results_dir={}".format(results_dir))
 
     training_dir = '%s/%s/train' % (args.ds_root, args.dataset)

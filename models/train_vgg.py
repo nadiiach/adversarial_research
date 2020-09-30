@@ -1,8 +1,7 @@
 # Training loop for classic alexnet architecture.
 
 import torch, os, argparse
-from net.models import oldvgg16
-
+from net.models import oldvgg16, vgg, softvgg
 torch.backends.cudnn.benchmark = True
 from net.models import train_utils
 # [int(0.5 + math.pow(2, 0.25 * i)) for i in range(100)]
@@ -47,7 +46,15 @@ def main(args):
 
     print("DataLoader created")
     # We initialize the model with some random, some identity convolutions.
-    model = oldvgg16.vgg16(num_classes=num_classes)
+    if args.model == "vgg16":
+        model = oldvgg16.vgg16(num_classes=num_classes)
+    elif args.model == "vgg11":
+        model = vgg.vgg11(num_classes=num_classes)
+    elif args.model == "softvgg16":
+        model = softvgg.vgg16(num_classes=num_classes)
+    else:
+        raise Exception("Wrong vgg name! {}".format(args.model))
+
     apply_init(model, args.init_method)
     model.train()
     model.cuda()
