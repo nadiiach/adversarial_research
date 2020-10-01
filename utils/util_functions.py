@@ -213,8 +213,9 @@ def get_batch_of_images(loader):
 
 def get_model_arg(model_name, it, longtrain=True, logger=None):
     cpname = "iter_{}_weights.pth".format(it)
-    cp = join("checkpoints", "long_train" if longtrain else "short_train",
-              model_name, cpname)
+    root = os.getcwd()
+    cp = join(root, "checkpoints", "long_trained" if longtrain
+              else "short_trained",  model_name, cpname)
 
     if logger is not None:
         logger.debug("Loading checkpoint {}".format(cp))
@@ -281,6 +282,34 @@ def get_image_from_tensor(image):
 def imshow(image, name=""):
     image = get_image_from_tensor(image)
     _show(image, name)
+
+"""get specific image returned in a batch format"""
+def get_image_as_batch(clas="", name="", path="",
+                       train_data_fold="datasets/places/train",
+                       val_data_folder="datasets/places/val",
+                       val=False, logger=None, crop_size=-1, model=None):
+
+    if crop_size == -1 and model is not None:
+        crop_size = 227 if "alexnet" in model else 224
+    elif crop_size == -1 and model is None:
+        crop_size = 227
+
+    if len(path) == 0:
+        path = join(train_data_fold if not val else val_data_folder, clas, name)
+
+    if logger is not None:
+        logger.debug("Loading dataset in get_image_as_batch ...")
+
+    folder = train_data_fold if not val else val_data_folder
+    pig = load_dataset(folder, crop_size, paths=(path))
+
+    if logger is not None:
+        logger.debug("Finished loading dataset in get_image_as_batch ...")
+
+    dl = torch.utils.data.DataLoader(pig, batch_size=1, shuffle=True,
+                                     num_workers=0, pin_memory=True)
+    image_batch, labels, paths = next(iter(dl))
+    return image_batch, labels, paths
 
 
 '''

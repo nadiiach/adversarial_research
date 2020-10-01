@@ -32,7 +32,7 @@ def get_batch(model, dataset="places"):
 
 
 def run_attacks(model, it, image_batch, labels,
-                attack_name="FGSM", epsilons=None):
+                attack_name="FGSM", epsilons=None, longtrain=True):
     success = True
     attacks = {
         "FGSM": fa.FGSM(),
@@ -43,7 +43,7 @@ def run_attacks(model, it, image_batch, labels,
     }
     bounds = (-2.2, 2.7)
 
-    model = uf.get_model_arg(model, it, logger=logger)
+    model = uf.get_model_arg(model, it, logger=logger, longtrain=longtrain)
     model.eval()
 
     fmodel = fb.PyTorchModel(model, bounds=bounds)
@@ -58,8 +58,7 @@ def run_attacks(model, it, image_batch, labels,
 
     logger.debug("\nStarting {}".format(attack_name))
     attack_object = attacks[attack_name]
-    logger.debug("Running attack with "
-          "epsilons={}".format(epsilons))
+    logger.debug("Running attack with epsilons={}".format(epsilons))
 
     raw, clipped, is_adv = attack_object(fmodel, image_batch,
                                          labels, epsilons=epsilons)
@@ -101,7 +100,7 @@ def run_long_model():
         iters = [65436, 131072, 185264, 262044,
                  370628, 524188, 881644, 1048576, 1763488]
 
-    #iters = [32668]
+    # iters = [32668]
     rows = 2
     cols = 2
     figsize = (cols * 8, rows * 5)
@@ -140,7 +139,7 @@ def run_long_model():
     plt.show()
 
 
-def run_compare_four_models(mods):
+def run_compare_four_models_func_epsilon(mods, longtrain=True):
     # dic = uf.get_available_iters_and_weights_paths("resnet18-forever")
     # print(dic)
     # print(sorted(dic.keys()))
@@ -191,10 +190,74 @@ def run_compare_four_models(mods):
                 epsilons, robust_accuracy, \
                     raw, clipped, is_adv, _ = run_attacks(model, it,
                                                           imb, lbls,
-                                                          attack_name=attack)
+                                                          attack_name=attack,
+                                                          longtrain=longtrain)
                 print("epsilons ", epsilons)
                 print("robust_accuracy ", robust_accuracy)
-                
+
+                logger.debug("epsilons: {}".format(epsilons))
+                logger.debug("robust_accuracy: {}".format(robust_accuracy))
+                ax.plot(epsilons, robust_accuracy, label=str(model))
+
+            ax.legend()
+    plt.show()
+
+def run_compare_four_models_func_iters(mods, longtrain=True):
+    # dic = uf.get_available_iters_and_weights_paths("resnet18-forever")
+    # print(dic)
+    # print(sorted(dic.keys()))
+    # exit()
+    attacks = ["FGSM", "PGD", "BasicIterativeAttack", "DeepFoolAttack"]
+    global logger
+
+    assert len(mods) == 4
+    image_batch, labels, orig_paths, \
+        names, cats, orig_images, catlist = get_batch("vgg16")
+    image_batch_alex, labels_alex, orig_paths_alex, \
+        names_alex, cats_alex, orig_images_alex, catlist = get_batch("alexnet")
+
+    it = 131072
+
+    #iters = [32668]
+    rows = 2
+    cols = 2
+    figsize = (cols * 8, rows * 5)
+    fig, axs = plt.subplots(rows, cols, figsize=figsize)
+    plt.subplots_adjust(left=None, bottom=None, right=None, top=1.1,
+                        wspace=None, hspace=None)
+    mid = (fig.subplotpars.right + fig.subplotpars.left) / 2
+    plt.suptitle("Adversarial attacks", x=mid, y=1)
+
+    i = 0
+    for r in range(rows):
+        for c in range(cols):
+            print(len(attacks), i)
+            attack = attacks[i]
+            i += 1
+            ax = axs[r][c]
+            ax.set_ylim(0, 0.7)
+            ax.set_title('Attack {}'.format(attack))
+            ax.set_xlabel('Epsilons')
+            ax.set_ylabel('Accuracy')
+
+            for model in mods:
+                if "alexnet" in model:
+                    imb = image_batch_alex
+                    lbls = labels_alex
+                else:
+                    imb = image_batch
+                    lbls = labels
+
+                print("Processing row={} col={}".format(r, c))
+
+                epsilons, robust_accuracy, \
+                    raw, clipped, is_adv, _ = run_attacks(model, it,
+                                                          imb, lbls,
+                                                          attack_name=attack,
+                                                          longtrain=longtrain)
+                print("epsilons ", epsilons)
+                print("robust_accuracy ", robust_accuracy)
+
                 logger.debug("epsilons: {}".format(epsilons))
                 logger.debug("robust_accuracy: {}".format(robust_accuracy))
                 ax.plot(epsilons, robust_accuracy, label=str(model))

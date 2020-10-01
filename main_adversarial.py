@@ -1,6 +1,5 @@
-from adversarial_attacks.test import run_compare_four_models, \
-    run_long_model, run_func_of_iters, run_func_of_iters_many_eps, \
-    single_image_attach, get_batch
+from adversarial_attacks.test import run_long_model, run_func_of_iters, \
+    run_func_of_iters_many_eps, single_image_attach, get_batch
 from utils import util_functions as uf
 import matplotlib.pyplot as plt
 import torch
