@@ -1,0 +1,5 @@
+DATASET_PATH = '/data/vision/torralba/datasets/places/files'
+BATCH_SIZE = 32
+MODEL_NAME = 'googlenet'
+SAVE_DIR = 'results/'
+MAX_EPOCHS = 4987896

@@ -16,8 +16,6 @@ class MyModelCheckpoint(ModelCheckpoint):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def save_checkpoint(self, trainer, pl_module):
-        epoch = trainer.current_epoch
-        if epoch not in snapshot_iters:
-            return
-        # super().save_checkpoint()
+    def _save_model(self, filepath, trainer, pl_module):
+        if trainer.current_epoch in snapshot_iters:
+            super()._save_model(filepath, trainer, pl_module)

@@ -21,7 +21,7 @@ def get_loaders(training_dir, val_dir, batch_size, resize=256, crop=224, train_w
                                  transforms.ToTensor(),
                                  NORMALIZER['imagenet'],
                              ])),
-        batch_size=args.batch_size, shuffle=True,
+        batch_size=batch_size, shuffle=True,
         num_workers=train_workers, pin_memory=True)
 
     val_loader = torch.utils.data.DataLoader(
@@ -34,7 +34,7 @@ def get_loaders(training_dir, val_dir, batch_size, resize=256, crop=224, train_w
                                  NORMALIZER['imagenet'],
                              ])),
         # batch_size=64, shuffle=False,
-        batch_size=args.batch_size, shuffle=False,
+        batch_size=batch_size, shuffle=False,
         num_workers=val_workers, pin_memory=True)
 
     return train_loader, val_loader
