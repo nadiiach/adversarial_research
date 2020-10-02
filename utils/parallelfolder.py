@@ -170,12 +170,24 @@ def make_parallel_dataset(image_roots, classification=False,
     Returns ([(img1, img2, clsid), (img1, img2, clsid)..],
              classes, class_to_idx)
     """
+    if not (isinstance(paths, tuple) or isinstance(paths, list)):
+        raise Exception("paths is not tuple or list, but {}".format(
+            type(paths)))
+
     image_roots = [os.path.expanduser(d) for d in image_roots]
     image_sets = OrderedDict()
     image_sets_classes = OrderedDict()  # in order to get consistent classes name regardless of restricted image set
 
     for j, root in enumerate(image_roots):
         for path in walk_image_files(root, verbose=verbose):
+            if len(paths) > 0 and path.split("/")[1] != \
+                    paths[0].split("/")[1]:
+                raise Exception("len(paths) == {} "\
+                                "or path.split('_')[0]={} "\
+                                "paths[0].split('_')={}".format(
+                                len(paths), path.split('_')[1],
+                                paths[0].split('_')[1]))
+
             if len(paths) == 0 or (len(paths) > 0 and path in paths):
                 image_sets = img_sets(image_sets, path, root, intersection, j)
             image_sets_classes = img_sets(image_sets_classes, path, root, intersection, j)

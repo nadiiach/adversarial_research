@@ -14,12 +14,11 @@ import cv2
 logger = logger.get_logger()
 BATCH_SIZE = 1
 
-def get_batch(model, dataset="places"):
-    global BATCH_SIZE
+def get_batch(model, dataset="places", batch_size=1):
     crop_size = 227 if "alexnet" in model else 224
     base = uf.find_child_dir_path("datasets")
     path = join(base, dataset, "val")
-    dl_train = uf.get_dataloader(path, crop_size, batch_size=BATCH_SIZE,
+    dl_train = uf.get_dataloader(path, crop_size, batch_size=batch_size,
                                  num_workers=0, logger=logger,
                                  normalized_version=False)
 
@@ -89,10 +88,10 @@ def run_long_model():
     #attacks = ["FGSM", "PGD", "AdditiveUniformNoiseAttack", "DeepFoolAttack"]
     attacks = ["FGSM", "PGD", "BasicIterativeAttack", "DeepFoolAttack"]
     global logger
-
+    global BATCH_SIZE
     model = "resnet18-forever"
     image_batch, labels, orig_paths, names, cats, \
-        orig_images, catlist = get_batch(model)
+        orig_images, catlist = get_batch(model, batch_size=BATCH_SIZE)
     if model == "resnet18-long":
         iters = [32668, 65436, 131072, 185264, 262044,
                  370628, 524188, 881644, 1048577]
@@ -149,9 +148,11 @@ def run_compare_four_models_func_epsilon(mods, longtrain=True):
 
     assert len(mods) == 4
     image_batch, labels, orig_paths, \
-        names, cats, orig_images, catlist = get_batch("vgg16")
+        names, cats, orig_images, catlist = get_batch("vgg16",
+                                                      batch_size=BATCH_SIZE)
     image_batch_alex, labels_alex, orig_paths_alex, \
-        names_alex, cats_alex, orig_images_alex, catlist = get_batch("alexnet")
+        names_alex, cats_alex, orig_images_alex, catlist = get_batch("alexnet",
+                                                      batch_size=BATCH_SIZE)
 
     it = 131072
 
@@ -212,9 +213,11 @@ def run_compare_four_models_func_iters(mods, longtrain=True):
 
     assert len(mods) == 4
     image_batch, labels, orig_paths, \
-        names, cats, orig_images, catlist = get_batch("vgg16")
+        names, cats, orig_images, catlist = get_batch("vgg16",
+                                                      batch_size=BATCH_SIZE)
     image_batch_alex, labels_alex, orig_paths_alex, \
-        names_alex, cats_alex, orig_images_alex, catlist = get_batch("alexnet")
+        names_alex, cats_alex, orig_images_alex, catlist = get_batch("alexnet",
+                                                      batch_size=BATCH_SIZE)
 
     it = 131072
 
@@ -271,7 +274,8 @@ def run_func_of_iters():
 
     model = "resnet18-forever"
     image_batch, labels, orig_paths, \
-        names, cats, orig_images, catlist = get_batch(model)
+        names, cats, orig_images, catlist = get_batch(model,
+                                                      batch_size=BATCH_SIZE)
     if model == "resnet18-long":
         iters = [32668, 65436, 131072, 185264, 262044, 370628,
                  524188, 881644, 1048577]
@@ -325,7 +329,8 @@ def run_func_of_iters_many_eps():
 
     model = "resnet18-long"
     image_batch, labels, orig_paths, \
-        names, cats, orig_images, catlist = get_batch(model)
+        names, cats, orig_images, catlist = get_batch(model,
+                                                      batch_size=BATCH_SIZE)
     if model == "resnet18-long":
         iters = [8092, 16384, 32668, 65436, 131072, 185264, 262044, 370628,
                  524188, 881644, 1048577]
@@ -395,7 +400,8 @@ def single_image_attach(input=None, epsilon=0.01, attack_name="PGD", it=131072,
 
     if input is None:
         image_batch, labels, orig_paths, \
-            names, cats, orig_images, catlist = get_batch(model)
+            names, cats, orig_images, catlist = get_batch(model,
+                                                          batch_size=BATCH_SIZE)
         logger.debug("Input is None, sampled new input {}".format(names[0]))
     else:
         image_batch, labels, orig_paths, names, cats, orig_images = input
@@ -426,7 +432,8 @@ def single_image_attach(input=None, epsilon=0.01, attack_name="PGD", it=131072,
             while 1:
                 print("Getting new image...")
                 image_batch, labels, orig_paths, \
-                    names, cats, orig_images, catlist = get_batch(model)
+                    names, cats, orig_images, catlist = get_batch(model,
+                                                        batch_size=BATCH_SIZE)
                 if orig_paths[0] != prev_img_path:
                     break
 

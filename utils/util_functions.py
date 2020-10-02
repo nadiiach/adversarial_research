@@ -284,29 +284,35 @@ def imshow(image, name=""):
     _show(image, name)
 
 """get specific image returned in a batch format"""
-def get_image_as_batch(clas="", name="", path="",
-                       train_data_fold="datasets/places/train",
-                       val_data_folder="datasets/places/val",
-                       val=False, logger=None, crop_size=-1, model=None):
+def get_image_as_batch(clas="", name="", paths=None,
+                       train_data_fold=None,
+                       val_data_folder=None,
+                       val=False, logger=None, crop_size=-1, model=None,
+                       batch_size=1):
 
     if crop_size == -1 and model is not None:
         crop_size = 227 if "alexnet" in model else 224
     elif crop_size == -1 and model is None:
         crop_size = 227
 
-    if len(path) == 0:
-        path = join(train_data_fold if not val else val_data_folder, clas, name)
+    if paths is None:
+        paths = join(train_data_fold if not val else val_data_folder, clas, name)
 
     if logger is not None:
         logger.debug("Loading dataset in get_image_as_batch ...")
+        foldd = train_data_fold if train_data_fold is not None \
+                else val_data_folder
+        # assert same format paths and data fold otherwise will error
+        assert isinstance(paths, tuple) \
+               and paths[0].split("/")[0] == foldd.split("/")[0]
 
     folder = train_data_fold if not val else val_data_folder
-    pig = load_dataset(folder, crop_size, paths=(path))
+    pig = load_dataset(folder, crop_size, paths=paths)
 
     if logger is not None:
         logger.debug("Finished loading dataset in get_image_as_batch ...")
 
-    dl = torch.utils.data.DataLoader(pig, batch_size=1, shuffle=True,
+    dl = torch.utils.data.DataLoader(pig, batch_size=batch_size, shuffle=True,
                                      num_workers=0, pin_memory=True)
     image_batch, labels, paths = next(iter(dl))
     return image_batch, labels, paths

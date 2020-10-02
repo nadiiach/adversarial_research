@@ -5,8 +5,7 @@ import matplotlib.pyplot as plt
 import torch
 import cv2
 
-BATCH_SIZE = 150
-MIN_EXAMPLES = 64
+BATCH_SIZE = 1
 train_len = input("short or long:").strip()
 iter_prefix = "iter"  # "best_iter"
 pos = len(iter_prefix.split("_"))
@@ -18,24 +17,17 @@ def list_dirs(model):
     ll = sorted(ll)
     return ll
 
-def get_image_both_sizes(dataset="places", val=True):
+def get_image_both_sizes():
     image_batch, labels, orig_paths, names, \
-    cats, orig_images, catlist = test.get_batch("resnet18",
-                                                batch_size=BATCH_SIZE)
+    cats, orig_images, catlist = test.get_batch("resnet18", batch_size=BATCH_SIZE)
     paths = orig_paths[0]
-    base = uf.find_child_dir_path("datasets")
-    basepath_val = os.path.join(base, dataset, "val")
-    basepath_train = os.path.join(base, dataset, "train")
     image_batch_alex, labels_alex, paths = \
         uf.get_image_as_batch(paths=tuple(paths),
-                              val_data_folder=basepath_val,
-                              train_data_fold=basepath_train,
-                              val=val, model="alexnet",
-                              batch_size=BATCH_SIZE)
+                              val_data_folder="datasets/places/val",
+                              val=True, model="alexnet")
     image_batch_alex, labels_alex = image_batch_alex.cuda(), labels_alex.cuda()
-    lbls_sorted, _ = torch.sort(labels)
-    lbls_alex_sorted, _ = torch.sort(labels_alex)
-    assert torch.equal(lbls_sorted, lbls_alex_sorted)
+    assert torch.equal(labels, labels_alex)
+    exit()
     return image_batch_alex, image_batch, labels, orig_paths
 
 #
@@ -59,7 +51,7 @@ models = ["resnet18"]
 if train_len == "long":
     iters = [131072]
 else:
-    iters = [32768, 65536, 131072]
+    iters = [65536, 131072]
 
 epsilons = [0.0001, 0.001, 0.01, 0.1]
 
@@ -71,24 +63,31 @@ attempt = 0
 while attempt < 50:
     print("attempt = {}".format(attempt))
     image_batch_alex, image_batch, labels, orig_paths = get_image_both_sizes()
+    print(orig_paths[0][0])
     attempt += 1
+
     failed = False
     for mod in models:
         for it in iters:
             model = uf.get_model_arg(mod, it, longtrain=train_len=="long")
             model.eval()
             model.cuda()
-            batch = image_batch_alex if "alex" in mod else image_batch
-            out = model(batch.cuda())
-            predcat = torch.argmax(out, dim=1)
-            correct_imgs = torch.flatten(torch.nonzero(predcat == labels))
-            batch = batch[correct_imgs]
 
-            print("Remained {} imgs, need at least {}".format(
-                batch.shape[0], MIN_EXAMPLES))
+            if "alex" in mod:
+                out = model(image_batch_alex.cuda())
+            else:
+                out = model(image_batch.cuda())
 
-            if batch.shape[0] < MIN_EXAMPLES:
-                print("failed!")
+            predcat = torch.argmax(out).cpu().item()
+            label = labels.cpu().numpy()[0].item()
+            #testing
+            # if predcat == label:
+            #     print("success")
+            #     exit()
+
+            if predcat != label:
+                print("predcat={} != labels={}, model={}, it={}".format(
+                    predcat, label, mod, it))
                 failed = True
                 break
         if failed is True:
