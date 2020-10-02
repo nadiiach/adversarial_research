@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import torch
 import cv2
 
-train_len = "short"
+train_len = "long"
 iter_prefix = "iter"  # "best_iter"
 pos = len(iter_prefix.split("_"))
 
