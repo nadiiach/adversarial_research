@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import torch
 import cv2
 
-train_len = "long"
+train_len = input("short or long:").strip()
 iter_prefix = "iter"  # "best_iter"
 pos = len(iter_prefix.split("_"))
 
@@ -20,9 +20,11 @@ def get_image_both_sizes():
     image_batch, labels, orig_paths, names, \
     cats, orig_images, catlist = test.get_batch("resnet18")
     path = orig_paths[0][0]
-    image_batch_alex, labels, paths = \
+    image_batch_alex, labels_alex, paths = \
         uf.get_image_as_batch(path=path, val_data_folder="datasets/places/val",
                               val=True, model="alexnet")
+    image_batch_alex, labels_alex = image_batch_alex.cuda(), labels_alex.cuda()
+    assert torch.equal(labels, labels_alex)
     return image_batch_alex, image_batch, labels, orig_paths
 
 #
@@ -40,9 +42,14 @@ def get_image_both_sizes():
 # ])
 # print(mi)
 
-models = ["alexnet", "resnet", "softalexnet", "softresnet"]
+#models = ["alexnet", "resnet", "softalexnet", "softresnet"]
+models = ["vgg16"]
 
-iters = [46241, 55009, 92582, 92682, 110118, 110218]
+if train_len == "long":
+    iters = [131072]
+else:
+    iters = [131072]
+
 epsilons = [0.0001, 0.001, 0.01, 0.1]
 
 image_batch_alex, image_batch, labels, orig_paths = None, None, None, None
@@ -52,6 +59,7 @@ attempt = 0
 while attempt < 50:
     print("attempt = {}".format(attempt))
     image_batch_alex, image_batch, labels, orig_paths = get_image_both_sizes()
+    print(orig_paths[0][0])
     attempt += 1
 
     failed = False
@@ -76,6 +84,9 @@ while attempt < 50:
         if failed:
             break
 
+if failed:
+    print("Didn't find an image with correct classification!")
+    exit()
 rows = 1
 cols = 2
 figsize = (cols * 8, rows * 5)
