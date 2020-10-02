@@ -43,7 +43,7 @@ def get_image_both_sizes():
 # print(mi)
 
 #models = ["alexnet", "resnet", "softalexnet", "softresnet"]
-models = ["vgg16"]
+models = ["alexnet"]
 
 if train_len == "long":
     iters = [131072]
