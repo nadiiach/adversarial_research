@@ -57,7 +57,7 @@ while attempt < 50:
     failed = False
     for mod in models:
         for it in iters:
-            model = uf.get_model_arg(mod, it, longtrain=False)
+            model = uf.get_model_arg(mod, it, longtrain=train_len=="long")
             model.eval()
             model.cuda()
 
