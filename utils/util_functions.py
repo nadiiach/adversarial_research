@@ -214,7 +214,7 @@ def get_batch_of_images(loader):
 def get_model_arg(model_name, it, longtrain=True, logger=None):
     cpname = "iter_{}_weights.pth".format(it)
     root = os.getcwd()
-    cp = join(root, "checkpoints", "long_trained" if longtrain
+    cp = os.path.join(root, "checkpoints", "long_trained" if longtrain
               else "short_trained",  model_name, cpname)
 
     if logger is not None:

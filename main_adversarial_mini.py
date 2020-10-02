@@ -48,7 +48,7 @@ models = ["resnet18"]
 if train_len == "long":
     iters = [131072]
 else:
-    iters = [131072]
+    iters = [65536, 131072]
 
 epsilons = [0.0001, 0.001, 0.01, 0.1]
 
@@ -56,6 +56,7 @@ image_batch_alex, image_batch, labels, orig_paths = None, None, None, None
 attempt = 0
 
 #find image that is classified correctly for all models and iters
+
 while attempt < 50:
     print("attempt = {}".format(attempt))
     image_batch_alex, image_batch, labels, orig_paths = get_image_both_sizes()
@@ -74,19 +75,27 @@ while attempt < 50:
             else:
                 out = model(image_batch.cuda())
 
-            predcat = torch.argmax(out).cpu().numpy()
-            label = labels.cpu().numpy()[0]
+            predcat = torch.argmax(out).cpu().item()
+            label = labels.cpu().numpy()[0].item()
+            #testing
+            # if predcat == label:
+            #     print("success")
+            #     exit()
+
             if predcat != label:
                 print("predcat={} != labels={}, model={}, it={}".format(
                     predcat, label, mod, it))
                 failed = True
                 break
-        if failed:
+        if failed is True:
             break
+    if failed is False:
+        break
 
-if failed:
+if attempt >= 50:
     print("Didn't find an image with correct classification!")
     exit()
+
 rows = 1
 cols = 2
 figsize = (cols * 8, rows * 5)
@@ -94,18 +103,26 @@ fig, axs = plt.subplots(rows, cols, figsize=figsize)
 mid = (fig.subplotpars.right + fig.subplotpars.left) / 2
 plt.subplots_adjust(left=None, bottom=None, right=None, top=1.1,
                     wspace=None, hspace=None)
-plt.suptitle(orig_paths[0][0], x=mid, y=1)
+plt.suptitle(orig_paths[0], x=mid, y=1)
 
 for i, mod in enumerate(models):
+    accs = []
+    ax = axs[i]
     for it in iters:
-        ax = axs[i]
         epsilons, robust_accuracy, raw, clipped, \
-            is_adv, (predcat, adv_predcat, label) = test.run_attacks(epsilons, it,
+            is_adv, (predcat, adv_predcat, label) = test.run_attacks(mod, it,
                 image_batch if "alexnet" not in mod else image_batch_alex,
-                    labels, attack_name="PGD", longtrain=train_len=="long")
+                labels, attack_name="PGD", longtrain=train_len=="long",
+                epsilons=epsilons)
 
-        ax.title("{}".format(mod))
-        ax.plot(iters, robust_accuracy, label="it {}".format(it))
+        accs.append(robust_accuracy)
+
+    ax.set_title(mod)
+    for j, ep in enumerate(epsilons):
+        ax.plot(iters, [x[j] for x in accs], label="it {}".format(it))
+
+plt.show()
+plt.close()
 
 #uf.verify_same_imgs(image_batch, image_batch_alex, title=path)
 
