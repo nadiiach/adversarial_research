@@ -312,6 +312,22 @@ def get_image_as_batch(clas="", name="", path="",
     return image_batch, labels, paths
 
 
+def verify_same_imgs(image1, image2, title=""):
+    if isinstance(image1, torch.Tensor):
+        img = get_image_from_tensor(image1)
+    if isinstance(image2, torch.Tensor):
+        img2 = get_image_from_tensor(image2)
+
+    rows = 1
+    cols = 2
+    figsize = (cols * 8, rows * 5)
+    fig, axs = plt.subplots(rows, cols, figsize=figsize)
+    axs[0].imshow(img)
+    axs[1].imshow(img2)
+    plt.title(title)
+    plt.show()
+    plt.close()
+
 '''
 hints
 
