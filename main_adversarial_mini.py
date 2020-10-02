@@ -91,7 +91,7 @@ for i, mod in enumerate(models):
         epsilons, robust_accuracy, raw, clipped, \
             is_adv, (predcat, adv_predcat, label) = test.run_attacks(epsilons, it,
                 image_batch if "alexnet" not in mod else image_batch_alex,
-                    labels, attack_name="PGD", longtrain=False)
+                    labels, attack_name="PGD", longtrain=train_len=="long")
 
         ax.title("{}".format(mod))
         ax.plot(iters, robust_accuracy, label="it {}".format(it))
