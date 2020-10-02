@@ -9,13 +9,12 @@ import torch.utils.data as data
 from torchvision.datasets.folder import default_loader as tv_default_loader
 from PIL import Image
 from collections import OrderedDict
-from utils import pbar
- 
 
 
 def grayscale_loader(path):
     with open(path, 'rb') as f:
         return Image.open(f).convert('L')
+
 
 class ndarray(numpy.ndarray):
     '''
@@ -23,6 +22,7 @@ class ndarray(numpy.ndarray):
     be attached as an attribute.
     '''
     pass
+
 
 def default_loader(filename):
     '''
@@ -35,6 +35,7 @@ def default_loader(filename):
     else:
         return tv_default_loader(filename)
 
+
 class ParallelImageFolders(data.Dataset):
     """
     A data loader that looks for parallel image filenames, for example
@@ -45,18 +46,19 @@ class ParallelImageFolders(data.Dataset):
     photo2/park/004236.png
     photo2/park/004237.png
     """
+
     def __init__(self, image_roots,
-            transform=None,
-            loader=default_loader,
-            stacker=None,
-            classification=False,
-            intersection=False,
-            filter_tuples=None,
-            verbose=None,
-            size=None,
-            shuffle=None,
-            lazy_init=True,
-            paths=()):
+                 transform=None,
+                 loader=default_loader,
+                 stacker=None,
+                 classification=False,
+                 intersection=False,
+                 filter_tuples=None,
+                 verbose=None,
+                 size=None,
+                 shuffle=None,
+                 lazy_init=True,
+                 paths=()):
         self.image_roots = image_roots
         if transform is not None and not hasattr(transform, '__iter__'):
             transform = [transform for _ in image_roots]
@@ -64,13 +66,14 @@ class ParallelImageFolders(data.Dataset):
         self.stacker = stacker
         self.loader = loader
         self.paths = paths
+
         def do_lazy_init():
             self.images, self.classes, self.class_to_idx = (
-                    make_parallel_dataset(image_roots,
-                        classification=classification,
-                        intersection=intersection,
-                        filter_tuples=filter_tuples,
-                        verbose=verbose, paths=self.paths))
+                make_parallel_dataset(image_roots,
+                                      classification=classification,
+                                      intersection=intersection,
+                                      filter_tuples=filter_tuples,
+                                      verbose=verbose, paths=self.paths))
 
             if len(self.images) == 0:
                 raise RuntimeError("Found 0 images within: %s" % image_roots)
@@ -79,6 +82,7 @@ class ParallelImageFolders(data.Dataset):
             if size is not None:
                 self.image = self.images[:size]
             self._do_lazy_init = None
+
         # Do slow initialization lazily.
         if lazy_init:
             self._do_lazy_init = do_lazy_init
@@ -109,8 +113,8 @@ class ParallelImageFolders(data.Dataset):
                 pass
         if self.transforms is not None:
             sources = [transform(source) if transform is not None else source
-                    for source, transform
-                    in itertools.zip_longest(sources, self.transforms)]
+                       for source, transform
+                       in itertools.zip_longest(sources, self.transforms)]
         if self.stacker is not None:
             sources = self.stacker(sources)
             if self.classes is not None:
@@ -142,11 +146,10 @@ def walk_image_files(rootdir, verbose=None):
         basedir = os.path.dirname(rootdir)
         with open(indexfile) as f:
             result = sorted([os.path.join(basedir, line.strip())
-                for line in f.readlines()])
+                             for line in f.readlines()])
             return result
     result = []
     for dirname, _, fnames in sorted(os.walk(rootdir)):
-            #pbar(os.walk(rootdir), desc='Walking %s' % os.path.basename(rootdir))):
         for fname in sorted(fnames):
             if is_image_file(fname) or is_npy_file(fname):
                 result.append(os.path.join(dirname, fname))
@@ -165,7 +168,7 @@ def img_sets(image_sets, path, root, intersection, j):
 
 
 def make_parallel_dataset(image_roots, classification=False,
-        intersection=False, filter_tuples=None, verbose=None, paths=()):
+                          intersection=False, filter_tuples=None, verbose=None, paths=()):
     """
     Returns ([(img1, img2, clsid), (img1, img2, clsid)..],
              classes, class_to_idx)
@@ -182,7 +185,7 @@ def make_parallel_dataset(image_roots, classification=False,
 
     if classification:
         classes = sorted(set([os.path.basename(os.path.dirname(k))
-            for k in image_sets_classes.keys()]))
+                              for k in image_sets_classes.keys()]))
         class_to_idx = dict({k: v for v, k in enumerate(classes)})
         for k, v in image_sets.items():
             v.append(class_to_idx[os.path.basename(os.path.dirname(k))])
