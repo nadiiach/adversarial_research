@@ -1,6 +1,7 @@
 # Training program for alexnet.
 
 import torch, os, argparse
+
 # try:
 #     from net.models import oldalexnet
 #     from net.models import train_utils
@@ -8,7 +9,7 @@ import torch, os, argparse
 #     import oldalexnet
 #     import train_utils
 
-from net.models import oldalexnet
+from net.models import oldalexnet, softalexnet
 from net.models import train_utils
 
 torch.backends.cudnn.benchmark = True
@@ -54,10 +55,18 @@ def main(args):
     print("DataLoader created")
     # We initialize the model with some random, some identity convolutions.
     # TODO: consider setting include_lrn=False here. (Left it on by accident.)
-    model = oldalexnet.AlexNet(num_classes=num_classes,
-                               include_dropout=args.dropout,
-                               split_groups=args.groups,
-                               w=args.w)
+    if args.model == 'alexnet':
+        model = oldalexnet.AlexNet(num_classes=num_classes,
+                                   include_dropout=args.dropout,
+                                   split_groups=args.groups,
+                                   w=args.w)
+    elif args.model == "softalexnet":
+        model = softalexnet.AlexNet(num_classes=num_classes,
+                                   include_dropout=args.dropout,
+                                   split_groups=args.groups,
+                                   w=args.w)
+    else:
+        raise Exception("Wrong name: {}".format(args.model))
 
     apply_init(model)
     model.train()
@@ -113,7 +122,9 @@ def main(args):
                                                     train_acc, train_loss, best,
                                                     results_dir,
                                                     checkpoint_filename,
-                                                    best_filename
+                                                    best_filename,
+                                                    args.model,
+                                                    args.w
                                                     )
                 model.train()
                 if iter_num % 1000 == 0:

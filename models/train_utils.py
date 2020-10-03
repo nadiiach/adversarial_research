@@ -50,7 +50,7 @@ def save_checkpoint(state, is_best, iter_copy, results_dir,
 def validate_and_checkpoint(keep_snapshot, model, val_loader, criterion,
                             iter_num, optimizer, scheduler, train_acc,
                             train_loss, best, results_dir,
-                            checkpoint_filename, best_filename):
+                            checkpoint_filename, best_filename, modeltype, w):
     model.eval()
     val_loss, val_acc = AverageMeter(), AverageMeter()
     for input, target in val_loader:
@@ -77,6 +77,8 @@ def validate_and_checkpoint(keep_snapshot, model, val_loader, criterion,
         'loss': val_loss.avg,
         'train_accuracy': train_acc.avg,
         'train_loss': train_loss.avg,
+        'type': modeltype,
+        "w": w
       },
         val_acc.avg > best['val_accuracy'],
         iter_num if keep_snapshot else None,

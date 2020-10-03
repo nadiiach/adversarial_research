@@ -122,7 +122,10 @@ def main(args):
                                                     train_acc, train_loss,
                                                     best, results_dir,
                                                     checkpoint_filename,
-                                                    best_filename)
+                                                    best_filename,
+                                                    args.model,
+                                                    args.w
+                                                    )
                 model.train()
                 if iter_num % 1000 == 0:
                     train_loss.reset()
