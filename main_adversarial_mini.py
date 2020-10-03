@@ -3,16 +3,35 @@ from adversarial_attacks import test
 from utils import util_functions as uf
 import matplotlib.pyplot as plt
 import torch
+import argparse
 import cv2
+models = ["alexnet", "resnet18", "softalexnet", "softresnet18"]
+# [32768, 65536, 131072]
+iters = [16284, 19384, 23170, 27454, 32768, 38868, 46241,
+                55009, 92582, 92682, 110118, 110218]
+epsilons = [0.0001, 0.001, 0.01, 0.1]
 
-BATCH_SIZE = 150
-MIN_EXAMPLES = 64
-train_len = input("short or long:").strip()
-iter_prefix = "iter"  # "best_iter"
+parser = argparse.ArgumentParser()
+parser.add_argument('--len', type=str, default="long")
+parser.add_argument('--iters', nargs='+', default=iters)
+parser.add_argument('--models', nargs='+', default=models)
+parser.add_argument('--eps', nargs='+', default=epsilons)
+parser.add_argument('--batch_size', type=int, default=150)
+parser.add_argument('--minex', type=int, default=65)
+parser.add_argument('--cpefix', type=str, choices=["best_iter", "iter"],
+                                    default="best_iter")
+
+args = parser.parse_args()
+iters = args.iters
+BATCH_SIZE = args.batch_size
+MIN_EXAMPLES = args.minex
+train_len = args.len
+iter_prefix = args.cpefix  # "best_iter"
+
 pos = len(iter_prefix.split("_"))
 
-def list_dirs(model):
-    p = "checkpoints/{}_trained/{}".format(train_len, model)
+def list_dirs(_model):
+    p = "checkpoints/{}_trained/{}".format(train_len, _model)
     ll = [x for x in os.listdir(p) if iter_prefix in x]
     ll = [int(x.split("_")[pos]) for x in ll]
     ll = sorted(ll)
@@ -53,21 +72,10 @@ def get_image_both_sizes(dataset="places", val=True):
 # ])
 # print(mi)
 
-#models = ["alexnet", "resnet", "softalexnet", "softresnet"]
-models = ["resnet18"]
-
-if train_len == "long":
-    iters = [131072]
-else:
-    iters = [32768, 65536, 131072]
-
-epsilons = [0.0001, 0.001, 0.01, 0.1]
-
 image_batch_alex, image_batch, labels, orig_paths = None, None, None, None
 attempt = 0
 
 #find image that is classified correctly for all models and iters
-
 while attempt < 50:
     print("attempt = {}".format(attempt))
     image_batch_alex, image_batch, labels, orig_paths = get_image_both_sizes()
@@ -105,9 +113,9 @@ cols = 2
 figsize = (cols * 8, rows * 5)
 fig, axs = plt.subplots(rows, cols, figsize=figsize)
 mid = (fig.subplotpars.right + fig.subplotpars.left) / 2
-plt.subplots_adjust(left=None, bottom=None, right=None, top=1.1,
+plt.subplots_adjust(left=None, bottom=None, right=None, top=1,
                     wspace=None, hspace=None)
-plt.suptitle(orig_paths[0], x=mid, y=1)
+plt.suptitle("# imgs {}".format(image_batch.shape[0]), x=mid, y=1)
 
 for i, mod in enumerate(models):
     accs = []
@@ -127,6 +135,3 @@ for i, mod in enumerate(models):
 
 plt.show()
 plt.close()
-
-#uf.verify_same_imgs(image_batch, image_batch_alex, title=path)
-
