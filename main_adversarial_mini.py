@@ -30,12 +30,14 @@ iter_prefix = args.cpefix  # "best_iter"
 
 pos = len(iter_prefix.split("_"))
 
+
 def list_dirs(_model):
     p = "checkpoints/{}_trained/{}".format(train_len, _model)
     ll = [x for x in os.listdir(p) if iter_prefix in x]
     ll = [int(x.split("_")[pos]) for x in ll]
     ll = sorted(ll)
     return ll
+
 
 def get_image_both_sizes(dataset="places", val=True):
     image_batch, labels, orig_paths, names, \
@@ -57,52 +59,63 @@ def get_image_both_sizes(dataset="places", val=True):
     assert torch.equal(lbls_sorted, lbls_alex_sorted)
     return image_batch_alex, image_batch, labels, orig_paths
 
-#
-# ll1 = list_dirs("softresnet18")
-# ll2 = list_dirs("softalexnet")
-# ll3 = list_dirs("alexnet")
-# ll4 = list_dirs("resnet18")
-# print(ll3)
-# print(ll4)
-# mi = min([
-#     # ll1[-1],
-#     # ll2[-1],
-#     ll3[-1],
-#     ll4[-1]
-# ])
-# print(mi)
 
 image_batch_alex, image_batch, labels, orig_paths = None, None, None, None
 attempt = 0
-
-#find image that is classified correctly for all models and iters
+correct_imgs = -1
+# find image that is classified correctly for all models and iters
 while attempt < 50:
     print("attempt = {}".format(attempt))
-    image_batch_alex, image_batch, labels, orig_paths = get_image_both_sizes()
+    image_batch_alex_attempt, image_batch_attempt, \
+            labels_attempt, orig_paths_attempt = get_image_both_sizes()
     attempt += 1
     failed = False
     for mod in models:
+
+        # if one model failed, dont try others
+        if failed is True:
+            break
+
+        print("*** model {} ***".format(mod))
         for it in iters:
-            model = uf.get_model_arg(mod, it, longtrain=train_len=="long")
+            print("it {}".format(it))
+
+            model = uf.get_model_arg(mod, it, longtrain=train_len == "long")
             model.eval()
             model.cuda()
-            batch = image_batch_alex if "alex" in mod else image_batch
+            batch = image_batch_alex_attempt if "alex" in mod \
+                                             else image_batch_attempt
+            assert batch.shape[0] == BATCH_SIZE
             out = model(batch.cuda())
             predcat = torch.argmax(out, dim=1)
-            correct_imgs = torch.flatten(torch.nonzero(predcat == labels))
+            correct_imgs = torch.flatten(
+                torch.nonzero(predcat == labels_attempt))
             batch = batch[correct_imgs]
+            labels = labels_attempt[correct_imgs]
+
+            if "alex" in mod:
+                image_batch_alex = batch
+            else:
+                image_batch = batch
 
             print("Remained {} imgs, need at least {}".format(
-                batch.shape[0], MIN_EXAMPLES))
+                len(correct_imgs), MIN_EXAMPLES))
 
-            if batch.shape[0] < MIN_EXAMPLES:
+            if len(correct_imgs) < MIN_EXAMPLES:
                 print("failed!")
                 failed = True
                 break
-        if failed is True:
-            break
+
+    # if all models passed keep the batch
     if failed is False:
         break
+
+if not len(correct_imgs) == image_batch.shape[0]:
+    print(
+        "len(correct_imgs)={} == image_batch.shape[0]={} == "
+        "image_batch_alex.shape[0]={}".format(len(correct_imgs),
+        image_batch.shape[0], image_batch_alex.shape[0]))
+print("Batched picked!")
 
 if attempt >= 50:
     print("Didn't find an image with correct classification!")
@@ -113,25 +126,32 @@ cols = 2
 figsize = (cols * 8, rows * 5)
 fig, axs = plt.subplots(rows, cols, figsize=figsize)
 mid = (fig.subplotpars.right + fig.subplotpars.left) / 2
-plt.subplots_adjust(left=None, bottom=None, right=None, top=1,
+plt.subplots_adjust(left=None, bottom=None, right=None,
+                    # top=1,
                     wspace=None, hspace=None)
-plt.suptitle("# imgs {}".format(image_batch.shape[0]), x=mid, y=1)
+plt.suptitle("# imgs {}".format(len(correct_imgs)), x=mid, y=1)
+
+print("Starting attacks...")
 
 for i, mod in enumerate(models):
     accs = []
     ax = axs[i]
     for it in iters:
         epsilons, robust_accuracy, raw, clipped, \
-            is_adv, (predcat, adv_predcat, label) = test.run_attacks(mod, it,
-                image_batch if "alexnet" not in mod else image_batch_alex,
-                labels, attack_name="PGD", longtrain=train_len=="long",
-                epsilons=epsilons)
-
+        is_adv, (predcat, adv_predcat, label) = \
+            test.run_attacks(mod, it,
+                             image_batch if "alexnet" not in mod
+                                         else image_batch_alex,
+                             labels,
+                             attack_name="PGD",
+                             longtrain=train_len == "long",
+                             epsilons=epsilons)
         accs.append(robust_accuracy)
-
     ax.set_title(mod)
     for j, ep in enumerate(epsilons):
-        ax.plot(iters, [x[j] for x in accs], label="it {}".format(it))
+        ax.plot(iters, [x[j] for x in accs], label="ep {}".format(ep))
 
+plt.ylim(top=1.0)
+plt.legend()
 plt.show()
 plt.close()
