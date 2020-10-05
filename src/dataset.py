@@ -129,7 +129,7 @@ class ParallelImageFolders(data.Dataset):
     def __len__(self):
         if self._do_lazy_init is not None:
             self._do_lazy_init()
-        return 1024
+        return len(self.images)
 
 
 def is_npy_file(path):

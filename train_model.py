@@ -7,17 +7,18 @@ from pytorch_lightning.loggers import WandbLogger
 from src import *
 from torchvision.models import *
 import toml
+import time
 
 test = googlenet  # dummy
 
 config = toml.load('config.toml')
 config["DATASET_PATH"] = '/data/vision/torralba/datasets/places/files'
-config["BATCH_SIZE"] = 32
+config["BATCH_SIZE"] = 200
 config["MODEL_NAME"] = 'googlenet'
 config["SAVE_DIR"] = 'results/'
 config["MAX_EPOCHS"] = 4987896
 
-train_loader, val_loader = get_loaders(f'{config["DATASET_PATH"]}/val', f'{config["DATASET_PATH"]}/val',
+train_loader, val_loader = get_loaders(f'{config["DATASET_PATH"]}/train', f'{config["DATASET_PATH"]}/val',
                                        batch_size=config["BATCH_SIZE"])
 
 NUM_CLASSES = len(train_loader.dataset.classes)
@@ -32,6 +33,7 @@ class ImageClassifier(pl.LightningModule):
         super().__init__()
         self.save_hyperparameters()  # grab lr and any other hyperparams
         self.model = eval(MODEL_LOOKUP[model_name])
+        self.iter = torch.LongTensor([0], device=self.device)
 
     def forward(self, x):
         """Forward fn for inference"""
@@ -42,7 +44,7 @@ class ImageClassifier(pl.LightningModule):
         y_hat = self.model(x)[0]  # .logits is GoogleLeNet specific?
         loss = F.cross_entropy(y_hat, y)
         _, y_pred = torch.max(F.softmax(y_hat, dim=1), dim=1)
-
+        self.iter += 1
         result = pl.TrainResult(minimize=loss)
         result.log_dict({'train_loss': loss, 'train_accuracy': accuracy(y_pred, y)}, prog_bar=True)
         return result
@@ -54,7 +56,7 @@ class ImageClassifier(pl.LightningModule):
         _, y_pred = torch.max(F.softmax(y_hat, dim=1), dim=1)
 
         result = pl.EvalResult(checkpoint_on=loss)
-        result.log_dict({'val_loss': loss, 'val_accuracy': accuracy(y_pred, y)})
+        result.log_dict({'val_loss': loss, 'val_accuracy': accuracy(y_pred, y), 'iter': self.iter})
         return result
 
     def configure_optimizers(self):
@@ -66,14 +68,16 @@ class ImageClassifier(pl.LightningModule):
         return [optimizer], [scheduler]
 
 
-checkpoint_callback = MyModelCheckpoint(
-    filepath=os.path.join(config["SAVE_DIR"], config["MODEL_NAME"], 'iter_{epoch:04d}-acc_{val_accuracy:.2f}.pth'),
-    save_top_k=-1,
-    save_last=True,
+checkpoint_callback = ModelCheckpoint(
+    filepath=os.path.join(config["SAVE_DIR"], config["MODEL_NAME"] + time.strftime("%Y%m%d-%H%M%S"),
+                          '{iter:08.0f}-{val_accuracy:.2f}'),
+    save_top_k=-1, period=0, save_weights_only=True
 )
 
 classifier = ImageClassifier(batch_size=config["BATCH_SIZE"], model_name=config["MODEL_NAME"],
-                             lr=1000000000000)  # temp value
+                             lr=float("inf"))
 wandb_logger = WandbLogger(name=f'{config["MODEL_NAME"]}', project='places_benchmark')
-trainer = pl.Trainer(gpus=[0], checkpoint_callback=checkpoint_callback, logger=wandb_logger, auto_lr_find='lr')
+trainer = pl.Trainer(gpus=[0], callbacks=[ValidateCheckpointCallback()], checkpoint_callback=checkpoint_callback,
+                     logger=wandb_logger,  # auto_lr_find='lr',
+                     check_val_every_n_epoch=float("inf"))  # allow callback to control validation :)
 trainer.fit(classifier, train_loader, val_loader)
