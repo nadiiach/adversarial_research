@@ -13,7 +13,7 @@ import torchvision.transforms as transforms
 import torchvision.utils as vutils
 from cross_domain_transferable_perturbations.gaussian_smoothing import *
 from cross_domain_transferable_perturbations.utils import *
-
+from cross_domain_transferable_perturbations.process_imagenet import *
 def main():
     parser = argparse.ArgumentParser(description='Cross Data Transferability')
     parser.add_argument('--train_dir', default='paintings',
@@ -23,19 +23,20 @@ def main():
     parser.add_argument('--is_nips', action='store_true',
                         help='Evaluation on NIPS data')
     parser.add_argument('--measure_adv', action='store_true',
-                        help='If not triggered then measuring only clean accuracy')
+                        help='If not set then measuring only clean accuracy',
+                        default=True)
     parser.add_argument('--batch_size', type=int, default=20,
                         help='Batch Size')
     parser.add_argument('--epochs', type=int, default=9,
                         help='Which Saving Instance to Evaluate')
     parser.add_argument('--eps', type=int, default=10,
                         help='Perturbation Budget')
-    parser.add_argument('--model_type', type=str, default='vgg16',
+    parser.add_argument('--model_type', type=str, default='res152',
                         help='Model against GAN is trained: vgg16, '
                              'vgg19, incv3, res152')
-    parser.add_argument('--model_t', type=str, default='vgg19',
+    parser.add_argument('--model_t', type=str, default='vgg16',
                         help='Model under attack : vgg16, vgg19, '
-                             'incv3, res152, res50, dense121, sqz')
+                             'incv3, res152, res50, dense201, sqz')
     parser.add_argument('--target', type=int, default=-1,
                         help='-1 if untargeted')
     parser.add_argument('--attack_type', type=str, default='img',
@@ -43,7 +44,7 @@ def main():
     parser.add_argument('--gk', action='store_true',
                         help='Apply Gaussian Smoothings to GAN Output')
     parser.add_argument('--rl', action='store_true',
-                        help='Relativstic or Simple GAN')
+                        help='Relativstic or Simple GAN', default=True)
     args = parser.parse_args()
     print(args)
 
@@ -97,6 +98,27 @@ def main():
         test_set = fix_labels_nips(test_set, pytorch=True)
     else:
         test_set = fix_labels(test_set, os.path.join(args.test_dir, "val.txt"))
+    #
+    # class_to_idx = get_class_to_idx()
+    # img_to_idx = get_img_to_idx()
+    # img_to_class = get_img_to_class()
+    # imgs = []
+    # targets = []
+    # classes = []
+    #
+    # for img_tup in test_set.imgs:
+    #     path = img_tup[0]
+    #     imgname = path.split("/")[-1]
+    #     clasidx = img_to_idx[imgname]
+    #     tup = (path, clasidx)
+    #     imgs.append(tup)
+    #     targets.append(clasidx)
+    #     classes.append(img_to_class[imgname])
+    #
+    # test_set.class_to_idx = class_to_idx
+    # test_set.classes = classes
+    # test_set.targets = targets
+    # test_set.imgs = imgs
 
     test_loader = torch.utils.data.DataLoader(test_set,
                                               batch_size=args.batch_size,
@@ -115,6 +137,8 @@ def main():
     adv_acc = 0
     clean_acc = 0
     fool_rate = 0
+
+    print("Test loader {}".format(test_loader))
 
     for i, (img, label) in enumerate(test_loader):
         img, label = img.to(device), label.to(device)
@@ -150,7 +174,8 @@ def main():
 
         if i % 100 == 0:
             if args.measure_adv:
-                print('At Batch:{}\t l_inf:{}'.format(i, (img - adv).max() * 255))
+                print('At Batch:{}\t l_inf:{}'
+                      .format(i, (img - adv).max() * 255))
             else:
                 print('At Batch:{}'.format(i))
 

@@ -39,4 +39,13 @@ def create_standard_val_file_for_cross_dom_trans_perturb(path_dic=None):
 
     print("Created {}".format(path_dic))
 
+def get_img_to_idx(class_to_idx_path=None, img_to_class_path=None):
+    class_to_idx = get_class_to_idx(class_to_idx_path)
+    img_to_class = get_img_to_class(img_to_class_path)
+    img_to_idx = {}
+    for img in img_to_class:
+        img_to_idx[img] = class_to_idx[img_to_class[img]]
+    return img_to_idx
+
+
 

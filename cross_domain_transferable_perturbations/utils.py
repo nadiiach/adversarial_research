@@ -21,6 +21,7 @@ def load_gan(args):
     if args.rl:
         netG.load_state_dict(
             torch.load(
+                'cross_domain_transferable_perturbations/'
                 'saved_models/netG_{}_{}_{}_{}_{}_rl.pth'.format(args.target,
                                                              args.attack_type,
                                                              args.model_type,
@@ -29,12 +30,12 @@ def load_gan(args):
     else:
         netG.load_state_dict(
             torch.load(
+                'cross_domain_transferable_perturbations/'
                 'saved_models/netG_{}_{}_{}_{}_{}.pth'.format(args.target,
                                                           args.attack_type,
                                                           args.model_type,
                                                           args.train_dir,
                                                           args.epochs)))
-
     return netG
 
 
