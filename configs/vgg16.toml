@@ -1,11 +1,9 @@
 [paths]
-data = '/data/vision/torralba/datasets/places/files'
 save = 'results/'
 
 [training]
-BATCH_SIZE = 256
+batch_size = 150
 
 [model]
-name = 'googlenet'
-instantiate = 'GoogLeNet(num_classes=NUM_CLASSES)'  # torchvision instantiation
-aux_weights = [0.4, 0.3, 0.3]  # how to weight Auxiliary classifiers
+name = 'vgg16'
+instantiate = "VGG(vgg.make_layers([64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 512, 512, 512, 'M', 512, 512, 512, 'M']), num_classes=NUM_CLASSES)"  # torchvision instantiation

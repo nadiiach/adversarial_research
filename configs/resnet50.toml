@@ -1,5 +1,4 @@
 [paths]
-data = '/data/vision/torralba/datasets/places/files'
 save = 'results/'
 
 [training]
