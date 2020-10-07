@@ -3,6 +3,10 @@ import torch.utils.data
 
 from src.dataset import ParallelImageFolders
 
+DATASET_PATHS = {
+    'places': '/data/vision/torralba/datasets/places/files'
+}
+
 # Dictionary of dataset norms (what is the norm of the places dataset, shouldn't we be normalizing to that?)
 NORMALIZER = {
     'imagenet': transforms.Normalize(mean=[0.485, 0.456, 0.406],
@@ -20,7 +24,7 @@ def get_loaders(training_dir, val_dir, batch_size, resize=256, crop=224, train_w
                                  transforms.RandomHorizontalFlip(),
                                  transforms.ToTensor(),
                                  NORMALIZER['imagenet'],
-                             ])),
+                             ]), lazy_init=True),
         batch_size=batch_size, shuffle=True,
         num_workers=train_workers, pin_memory=True)
 
@@ -32,7 +36,7 @@ def get_loaders(training_dir, val_dir, batch_size, resize=256, crop=224, train_w
                                  transforms.CenterCrop(crop),
                                  transforms.ToTensor(),
                                  NORMALIZER['imagenet'],
-                             ])),
+                             ]), lazy_init=True),
         # batch_size=64, shuffle=False,
         batch_size=batch_size, shuffle=False,
         num_workers=val_workers, pin_memory=True)

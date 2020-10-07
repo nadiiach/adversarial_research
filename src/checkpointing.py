@@ -1,5 +1,6 @@
 from pytorch_lightning import Callback
 from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
+import sys
 
 snapshot_iters = [
     0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 13, 16, 19, 23, 27, 32, 38, 45,
@@ -13,17 +14,9 @@ snapshot_iters = [
 ]
 
 
-class MyModelCheckpoint(ModelCheckpoint):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-
-    def _save_model(self, filepath, trainer, pl_module):
-        if trainer.current_epoch in snapshot_iters:
-            super()._save_model(filepath, trainer, pl_module)
-
-
 class ValidateCheckpointCallback(Callback):
-    def on_train_batch_end(self, trainer, pl_module, batch, batch_idx, dataloader_idx):
+    def on_batch_end(self, trainer, pl_module):
         if pl_module.iter in snapshot_iters:
             trainer.run_evaluation(test_mode=False)
+        if pl_module.iter == snapshot_iters[-1]:
+            raise SystemExit(f"Finished final training iteration f{snapshot_iters[-1]}")

@@ -9,6 +9,7 @@ import torch.utils.data as data
 from torchvision.datasets.folder import default_loader as tv_default_loader
 from PIL import Image
 from collections import OrderedDict
+from tqdm.auto import tqdm
 
 
 def grayscale_loader(path):
@@ -178,7 +179,7 @@ def make_parallel_dataset(image_roots, classification=False,
     image_sets_classes = OrderedDict()  # in order to get consistent classes name regardless of restricted image set
 
     for j, root in enumerate(image_roots):
-        for path in walk_image_files(root, verbose=verbose):
+        for path in tqdm(walk_image_files(root, verbose=verbose), desc='Loading Dataset'):
             if len(paths) == 0 or (len(paths) > 0 and path in paths):
                 image_sets = img_sets(image_sets, path, root, intersection, j)
             image_sets_classes = img_sets(image_sets_classes, path, root, intersection, j)

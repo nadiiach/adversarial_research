@@ -1,0 +1,10 @@
+[paths]
+data = '/data/vision/torralba/datasets/places/files'
+save = 'results/'
+
+[training]
+batch_size = 100
+
+[model]
+name = 'resnet50'
+instantiate = 'ResNet(resnet.Bottleneck, [3, 4, 6, 3], num_classes=NUM_CLASSES)'  # torchvision instantiation
