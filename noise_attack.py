@@ -5,7 +5,7 @@ from src import *
 wandb.init(name='uniform_noise', project='attack_benchmark')
 
 
-def attack(clean_image, model, eps=10 / 255, device='cpu'):
+def attack(clean_image, model, y, forward_t, eps=10 / 255, device='cpu'):
     """
     Generate adversarial image from clean images (Bx3xWxH) and model (if whitebox attack).
     :param clean_image: original image
