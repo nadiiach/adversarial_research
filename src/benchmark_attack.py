@@ -24,7 +24,8 @@ def benchmark_attack(attack, model, batch_size=64, subset=False, dataset='imagen
         logger.add_metrics({'clean_accuracy': accuracy(clean_out, y).mean().detach().item(),
                             'adv_accuracy': accuracy(adv_out, y).mean().detach().item(),
                             'kl_divergence': F.kl_div(F.log_softmax(adv_out, dim=1),
-                                                      F.softmax(clean_out, dim=1)).detach().item()
+                                                      F.softmax(clean_out, dim=1),
+                                                      reduction='batchmean').detach().item()
                             })
         count += 1
         if subset and count > 20:
