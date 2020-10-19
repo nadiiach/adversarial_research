@@ -2,7 +2,8 @@ import torch
 import torchvision
 from cross_domain_transferable_perturbations.generators import GeneratorResnet
 import pandas as pd
-
+import numpy as np
+from matplotlib import pyplot as plt
 
 # Load a particular generator
 def load_gan(args):
@@ -123,3 +124,44 @@ def fix_labels_nips(test_set, pytorch=False):
 # Rescale image b/w (-1, +1)
 def rescale(image):
     return image*2-1
+
+def projection(adv, img, eps):
+    xx = torch.max(adv, img - eps)
+    adv = torch.min(xx, img + eps)
+    adv = torch.clamp(adv, 0.0, 1.0)
+    return adv
+
+def normalize(t):
+    mean = [0.485, 0.456, 0.406]
+    std = [0.229, 0.224, 0.225]
+    t[:, 0, :, :] = (t[:, 0, :, :] - mean[0]) / std[0]
+    t[:, 1, :, :] = (t[:, 1, :, :] - mean[1]) / std[1]
+    t[:, 2, :, :] = (t[:, 2, :, :] - mean[2]) / std[2]
+    return t
+
+def get_label(img, device, args, model):
+    img = img.to(device)
+
+    if args.target == -1:
+        # whatever the model think about the input
+        inp = normalize(img.clone().detach())
+        label = model(inp).argmax(dim=-1).detach()
+    else:
+        label = torch.LongTensor(img.size(0))
+        label.fill_(args.target)
+        label = label.to(device)
+    return label
+
+def save_img(img_tensor, args, suffix, epoch):
+    t_noise_np = np.transpose(img_tensor[0].detach().cpu().numpy(), (1, 2, 0))
+    f = plt.figure()
+    plt.imshow(t_noise_np, interpolation='spline16')
+    plt.xticks([])
+    plt.yticks([])
+    # plt.show()
+    f.savefig('saved_models/noise_transformed_{}_{}_{}_{}_{}_rl'.
+              format(args.target, args.model_type,
+                     args.train_dir, epoch, suffix)
+              + ".pdf", bbox_inches='tight')
+    np.save('saved_models/noise_transformed_{}_{}_{}_{}_rl'.format(
+        args.target, args.model_type, args.train_dir, epoch), t_noise_np)

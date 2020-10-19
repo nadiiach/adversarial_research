@@ -34,7 +34,7 @@ def main():
     parser.add_argument('--model_type', type=str, default='res152',
                         help='Model against GAN is trained: vgg16, '
                              'vgg19, incv3, res152')
-    parser.add_argument('--model_t', type=str, default='vgg16',
+    parser.add_argument('--model_t', type=str, default='vgg19',
                         help='Model under attack : vgg16, vgg19, '
                              'incv3, res152, res50, dense201, sqz')
     parser.add_argument('--target', type=int, default=-1,

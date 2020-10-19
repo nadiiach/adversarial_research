@@ -1,5 +1,5 @@
 import collections, torch, torchvision, numpy
-from models import vgg
+from net.models import vgg
 
 # Return a version of vgg16_nadiia where the layers are given their research names.
 def vgg16(*args, **kwargs):

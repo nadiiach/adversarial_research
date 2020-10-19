@@ -9,7 +9,7 @@ import torch.nn.functional as F
 from collections import OrderedDict
 import torchvision.transforms
 import numpy
-from utils import nethook
+from netdissect import nethook
 
 def load_places_alexnet(weight_file):
     model = AlexNet()
