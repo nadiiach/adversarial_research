@@ -14,11 +14,12 @@ parser.add_argument('-s', '--step_size', default=0.01, dest='step_size', type=fl
 args = parser.parse_args()
 device = torch.device(f'cuda:{args.gpu}')
 
+
 def clip(adv, img, eps):
     return torch.clamp(torch.min(torch.max(adv, img - eps), img + eps), 0.0, 1.0)
 
 
-wandb.init(name='blackbox_ensemble_pgd', project='attack_benchmark')
+wandb.init(name='kl_blackbox_pgd', project='attack_benchmark')
 
 wandb.log({'num_steps': args.num_steps,
            'step_size': args.step_size})
@@ -27,27 +28,21 @@ wandb.log({'num_steps': args.num_steps,
 class Ensemble():
     def __init__(self):
 
-        self.ensemble = [vgg16(pretrained=True),
-                         resnet152(pretrained=True),
-                         resnet101(pretrained=True),
-                         resnet50(pretrained=True),
-                         mobilenet_v2(pretrained=True)]
+        self.ensemble = [resnet152(pretrained=True)]
 
         for net in self.ensemble:
             net.eval()
             net.to(device)
 
     def get_loss(self, x, y):
-        loss = F.cross_entropy(self.ensemble[0](x), y)
-        for net in self.ensemble[1:]:
-            loss += F.cross_entropy(net(x), y)
+        loss = F.kl_div(self.ensemble[0](x), y, reduction='batchmean')
         return loss
 
 
 ensemble = Ensemble()
 
 
-def attack(clean_image, model, y, forward_t, eps, device='cpu'):
+def attack(clean_image, model, y, clean_out, forward_t, eps, device='cpu'):
     """
     Generate adversarial image from clean images (Bx3xWxH) and model (if whitebox attack).
     :param clean_image: original image
@@ -55,15 +50,16 @@ def attack(clean_image, model, y, forward_t, eps, device='cpu'):
     :param eps: perturbation budget (in pretransformed space)
     :return:
     """
+    clean_out = clean_out.detach()
     adv = clean_image + ((2 * eps) * torch.rand(*clean_image.shape, device=device) - eps)
     for i in range(args.num_steps):
         adv = clip(adv, clean_image, eps).detach()  # project onto valid space
         adv.requires_grad = True
-        loss = ensemble.get_loss(forward_t(adv), y)
+        loss = ensemble.get_loss(forward_t(adv), clean_out.detach())
         loss.backward()
         adv = clip(adv + args.step_size * torch.sign(adv.grad.data), clean_image, eps).detach()
 
     return clip(adv, clean_image, eps)
 
 
-benchmark_attack(attack, googlenet(pretrained=True), subset=40, device=device, wandb_init=False, batch_size=8)
+benchmark_attack(attack, googlenet(pretrained=True), subset=20, device=device, wandb_init=False, batch_size=16)

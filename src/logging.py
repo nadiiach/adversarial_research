@@ -13,7 +13,9 @@ class CumulativeWandbLogger:
             self.metrics[metric] = self.metrics.get(metric, 0) + metrics[metric]
         self.count += 1
 
-    def aggregate_and_log(self):
-        wandb.log({k: v / self.count for k, v in self.metrics.items()})
+    def aggregate_and_log(self, extra_metrics):
+        aggregated_metrics = {k: v / self.count for k, v in self.metrics.items()}
+        aggregated_metrics.update(extra_metrics)
+        wandb.log(aggregated_metrics)
         self.count = 0
         self.metrics = {}

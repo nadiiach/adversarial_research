@@ -14,11 +14,12 @@ parser.add_argument('-s', '--step_size', default=0.01, dest='step_size', type=fl
 args = parser.parse_args()
 device = torch.device(f'cuda:{args.gpu}')
 
+
 def clip(adv, img, eps):
     return torch.clamp(torch.min(torch.max(adv, img - eps), img + eps), 0.0, 1.0)
 
 
-wandb.init(name='blackbox_ensemble_pgd', project='attack_benchmark')
+wandb.init(name='blackbox_pgd', project='attack_benchmark')
 
 wandb.log({'num_steps': args.num_steps,
            'step_size': args.step_size})
@@ -27,11 +28,7 @@ wandb.log({'num_steps': args.num_steps,
 class Ensemble():
     def __init__(self):
 
-        self.ensemble = [vgg16(pretrained=True),
-                         resnet152(pretrained=True),
-                         resnet101(pretrained=True),
-                         resnet50(pretrained=True),
-                         mobilenet_v2(pretrained=True)]
+        self.ensemble = [resnet152(pretrained=True)]
 
         for net in self.ensemble:
             net.eval()
@@ -66,4 +63,4 @@ def attack(clean_image, model, y, forward_t, eps, device='cpu'):
     return clip(adv, clean_image, eps)
 
 
-benchmark_attack(attack, googlenet(pretrained=True), subset=40, device=device, wandb_init=False, batch_size=8)
+benchmark_attack(attack, googlenet(pretrained=True), subset=20, device=device, wandb_init=False, batch_size=16)

@@ -45,7 +45,7 @@ def get_loaders(training_dir, val_dir, batch_size, resize=256, crop=224, train_w
     return train_loader, val_loader
 
 
-def get_loader(val_dir, batch_size, resize=256, crop=224, train_workers=48, val_workers=24):
+def get_loader(val_dir, batch_size, resize=256, crop=224, val_workers=1):
     return torch.utils.data.DataLoader(
         ParallelImageFolders([val_dir],
                              classification=True,
@@ -54,9 +54,8 @@ def get_loader(val_dir, batch_size, resize=256, crop=224, train_workers=48, val_
                                  transforms.CenterCrop(crop),
                                  transforms.ToTensor(),
                              ])),
-        # batch_size=64, shuffle=False,
         batch_size=batch_size, shuffle=False,
-        num_workers=val_workers, pin_memory=True)
+        pin_memory=True)
 
 
 import src.batch_transforms
