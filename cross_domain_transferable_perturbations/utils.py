@@ -4,39 +4,52 @@ from cross_domain_transferable_perturbations.generators import GeneratorResnet
 import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
-
+import cv2
 # Load a particular generator
-def load_gan(args):
+
+def _get_path(args, new):
+    if args.rl:
+        path = 'cross_domain_transferable_perturbations/' \
+               'saved_models/{}netG_{}_{}_{}_{}_{}_rl.pth'.format(
+                    "new_" if new else "",
+                    args.target,
+                    args.attack_type,
+                    args.model_type,
+                    args.train_dir,
+                    args.epochs)
+    else:
+        path = '/mnt/Vol2TBSabrentRoc/Projects/adversarial_research/' \
+                'cross_domain_transferable_perturbations/'\
+                'saved_models/{}netG_{}_{}_{}_{}_{}.pth'.format(
+                        "new_" if new else "",
+                        args.target,
+                        args.attack_type,
+                        args.model_type,
+                        args.train_dir,
+                        args.epochs)
+    return path
+
+def load_gan(args, new=False):
     # Load Generator
     if args.model_type == 'incv3':
         netG = GeneratorResnet(inception=True)
     else:
         netG = GeneratorResnet()
-
     print('Label: {} \t Attack: {} dependent \t Model: {} '
           '\t Distribution: {} \t Saving instance: {}'.format(args.target,
                                                                args.attack_type,
                                                                args.model_type,
                                                                args.train_dir,
                                                                args.epochs))
-    if args.rl:
-        netG.load_state_dict(
-            torch.load(
-                'cross_domain_transferable_perturbations/'
-                'saved_models/netG_{}_{}_{}_{}_{}_rl.pth'.format(args.target,
-                                                             args.attack_type,
-                                                             args.model_type,
-                                                             args.train_dir,
-                                                             args.epochs)))
-    else:
-        netG.load_state_dict(
-            torch.load(
-                'cross_domain_transferable_perturbations/'
-                'saved_models/netG_{}_{}_{}_{}_{}.pth'.format(args.target,
-                                                          args.attack_type,
-                                                          args.model_type,
-                                                          args.train_dir,
-                                                          args.epochs)))
+    try:
+        path = _get_path(args, new)
+        netG.load_state_dict(torch.load(path))
+    except:
+        print("{} failed".format(path))
+        path = _get_path(args, ~new)
+        netG.load_state_dict(torch.load(path))
+
+    print("Loaded {}".format(path))
     return netG
 
 
@@ -152,16 +165,33 @@ def get_label(img, device, args, model):
         label = label.to(device)
     return label
 
-def save_img(img_tensor, args, suffix, epoch):
-    t_noise_np = np.transpose(img_tensor[0].detach().cpu().numpy(), (1, 2, 0))
+def save_img(img_tensor, args, suffix, epoch, folder, name, save_npy=True):
+    img = np.transpose(img_tensor[0].detach().cpu().numpy(), (1, 2, 0))
+    img = np.float32(img)
+    img = cv2.normalize(img, None, alpha=0,
+                        beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
+
     f = plt.figure()
-    plt.imshow(t_noise_np, interpolation='spline16')
+    plt.imshow(img, interpolation='spline16')
     plt.xticks([])
     plt.yticks([])
     # plt.show()
-    f.savefig('saved_models/noise_transformed_{}_{}_{}_{}_{}_rl'.
-              format(args.target, args.model_type,
-                     args.train_dir, epoch, suffix)
-              + ".pdf", bbox_inches='tight')
-    np.save('saved_models/noise_transformed_{}_{}_{}_{}_rl'.format(
-        args.target, args.model_type, args.train_dir, epoch), t_noise_np)
+    print("Saving noise pictures after epoch {}".format(epoch))
+
+    figpath = '/mnt/Vol2TBSabrentRoc/Projects/adversarial_research/' \
+                'cross_domain_transferable_perturbations/{}/' \
+                '{}_{}_{}_{}_{}_{}_rl.pdf'\
+                .format(folder, name, args.target, args.model_type,
+                        args.train_dir, epoch, suffix)
+    npypath = '/mnt/Vol2TBSabrentRoc/Projects/adversarial_research/' \
+                'cross_domain_transferable_perturbations/{}/' \
+                '{}_{}_{}_{}_{}_rl.npy'\
+                .format(folder, name, args.target, args.model_type,
+                        args.train_dir, epoch)
+
+    f.savefig(figpath, bbox_inches='tight')
+    if save_npy:
+        np.save(npypath, img)
+
+    print("Saved {}".format(figpath))
+    print("Saved {}".format(npypath))
