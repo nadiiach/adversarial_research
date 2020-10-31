@@ -49,6 +49,7 @@ def get_loader(val_dir, batch_size, resize=256, crop=224, val_workers=1):
     return torch.utils.data.DataLoader(
         ParallelImageFolders([val_dir],
                              classification=True,
+                             lazy_init=False,
                              transform=transforms.Compose([
                                  transforms.Resize(resize),
                                  transforms.CenterCrop(crop),

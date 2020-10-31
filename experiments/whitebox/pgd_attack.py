@@ -24,7 +24,7 @@ wandb.log({'num_steps': args.num_steps,
            'step_size': args.step_size})
 
 
-def whitebox_pgd_attack(clean_image, model, y, forward_t, eps, device='cpu'):
+def whitebox_pgd_attack(clean_image, model, y, normalize, eps, device='cpu'):
     """
     Generate adversarial image from clean images (Bx3xWxH) and model (if whitebox attack).
     :param clean_image: original image
@@ -36,7 +36,7 @@ def whitebox_pgd_attack(clean_image, model, y, forward_t, eps, device='cpu'):
     for i in range(args.num_steps):
         adv = clip(adv, clean_image, eps).detach()  # project onto valid space
         adv.requires_grad = True
-        loss = F.cross_entropy(model(forward_t(adv)), y)
+        loss = F.cross_entropy(model(normalize(adv)), y)
         loss.backward()
         adv = clip(adv + args.step_size * torch.sign(adv.grad.data), clean_image, eps).detach()
 
