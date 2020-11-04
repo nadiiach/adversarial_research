@@ -11,7 +11,8 @@ from torch.utils.data import DataLoader
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
 from cross_domain_transferable_perturbations.generators import GeneratorResnet
-from utils import *
+from cross_domain_transferable_perturbations.utils import *
+
 
 parser = argparse.ArgumentParser(description='Cross Data Transferability')
 parser.add_argument('--train_dir', default='imagenet',
@@ -24,7 +25,7 @@ parser.add_argument('--lr', type=float, default=0.0002,
             help='Initial learning rate for adam')
 parser.add_argument('--eps', type=int, default=10,
             help='Perturbation Budget')
-parser.add_argument('--model_type', type=str, default='incv3',
+parser.add_argument('--model_type', type=str, default='vgg16',
             help='Model against GAN is trained: vgg16, vgg19, incv3, res152')
 parser.add_argument('--attack_type', type=str, default='img',
             help='Training is either img/noise dependent')
@@ -55,17 +56,17 @@ model.eval()
 # Input dimensions
 if args.model_type in ['vgg16', 'vgg19', 'res152']:
     scale_size = 256
-    img_size = 223 # 224
+    img_size = 224
 else:
     scale_size = 300
     img_size = 299
 
-
+channels = 4
 # Generator
 if args.model_type == 'incv3':
-    netG = GeneratorResnet(inception=True)
+    netG = GeneratorResnet(inception=True, channels=channels)
 else:
-    netG = GeneratorResnet()
+    netG = GeneratorResnet(channels=channels)
 netG.to(device)
 
 # Optimizer
@@ -95,26 +96,8 @@ train_loader = torch.utils.data.DataLoader(train_set,
 train_size = len(train_set)
 print('Training data size:', train_size)
 
-
 # Loss
 criterion = nn.CrossEntropyLoss()
-
-
-####################
-# Set-up noise if required
-####################
-if args.attack_type == 'noise':
-    noise = np.random.uniform(0, 1, img_size * img_size * 3)
-    # Save noise
-    np.save('saved_models/noise_{}_{}_{}_rl'.format(args.target,
-                                                    args.model_type,
-                                                    args.train_dir), noise)
-    im_noise = np.reshape(noise, (3, img_size, img_size))
-    im_noise = im_noise[np.newaxis, :, :, :]
-    im_noise_tr = np.tile(im_noise, (args.batch_size, 1, 1, 1))
-    noise_tensor_tr = torch.from_numpy(im_noise_tr).\
-                type(torch.FloatTensor).to(device)
-
 
 # Training
 print('Label: {} \t Attack: {} dependent \t Model: {} \t '
@@ -126,6 +109,12 @@ print('Label: {} \t Attack: {} dependent \t Model: {} \t '
 for epoch in range(args.epochs):
     running_loss = 0
     for i, (img, _) in enumerate(train_loader):
+        img = torch.cat([img] * 2)
+        s = img.shape
+        noise = torch.rand((s[0], 1, s[2], s[3]))
+        assert not torch.all(noise[0].eq(noise[1]))
+        imgwnoise = torch.cat((img, noise), 1)
+        imgwnoise = imgwnoise.to(device)
         img = img.to(device)
 
         if args.target == -1:
@@ -139,25 +128,26 @@ for epoch in range(args.epochs):
 
         netG.train()
         optimG.zero_grad()
+        #print(imgwnoise.shape)
+        adv = netG(imgwnoise)
 
-        if args.attack_type == 'noise':
-            adv = netG(noise_tensor_tr)
-        else:
-            adv = netG(img)
-
+        # print(noise.shape)
+        # print(adv.shape)
+        # print(img.shape)
+        # exit()
         # Projection
         xx = torch.max(adv, img - eps)
         adv = torch.min(xx, img + eps)
         adv = torch.clamp(adv, 0.0, 1.0)
 
-        if args.target == -1:
-            # Gradient accent (Untargetted Attack)
-            adv_out = model(normalize(adv))
-            img_out = model(normalize(img))
-            loss = -criterion(adv_out-img_out, label)
-        else:
-            # Gradient decent (Targetted Attack)
-            loss = criterion(model(normalize(adv)), label)
+        f = adv[:int(img.shape[0]/2)]
+        s = adv[int(img.shape[0]/2):]
+        diff = torch.norm(f - s)
+
+        adv_out = model(normalize(adv))
+        img_out = model(normalize(img))
+        loss = -(criterion(adv_out-img_out, label) + 0.05 * diff)
+
         loss.backward()
         optimG.step()
 
@@ -167,14 +157,14 @@ for epoch in range(args.epochs):
             running_loss = 0
         running_loss += abs(loss.item())
 
-    torch.save(netG.state_dict(), 'saved_models/netG_{}_{}_{}_{}_{}_rl.pth'
+    torch.save(netG.state_dict(), 'saved_models/div_netG_{}_{}_{}_{}_{}_rl.pth'
                .format(args.target, args.attack_type, args.model_type,
                        args.train_dir, epoch))
 
     # Save noise
     if args.attack_type == 'noise':
         # Save transformed noise
-        t_noise = netG(torch.from_numpy(im_noise)
+        t_noise = netG(torch.from_numpy(noise)
                        .type(torch.FloatTensor).to(device))
         t_noise_np = np.transpose(t_noise[0].detach().cpu().numpy(), (1,2,0))
         f = plt.figure()

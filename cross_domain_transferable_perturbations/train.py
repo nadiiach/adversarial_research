@@ -16,7 +16,7 @@ from utils import *
 parser = argparse.ArgumentParser(description='Cross Data Transferability')
 parser.add_argument('--train_dir', default='imagenet',
             help='comics, imagenet')
-parser.add_argument('--batch_size', type=int, default=15,
+parser.add_argument('--batch_size', type=int, default=30,
             help='Number of trainig samples/batch')
 parser.add_argument('--epochs', type=int, default=10,
             help='Number of training epochs')
@@ -24,7 +24,7 @@ parser.add_argument('--lr', type=float, default=0.0002,
             help='Initial learning rate for adam')
 parser.add_argument('--eps', type=int, default=10,
             help='Perturbation Budget')
-parser.add_argument('--model_type', type=str, default='incv3',
+parser.add_argument('--model_type', type=str, default='vgg16',
             help='Model against GAN is trained: vgg16, vgg19, incv3, res152')
 parser.add_argument('--attack_type', type=str, default='img',
             help='Training is either img/noise dependent')

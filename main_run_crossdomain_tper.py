@@ -1,3 +1,5 @@
-import cross_domain_transferable_perturbations.eval as cdtp_eval
+import cross_domain_transferable_perturbations.eval as eval
 import cross_domain_transferable_perturbations
-cdtp_eval.main()
+import cross_domain_transferable_perturbations.eval_test as eval_test
+eval.main()
+#eval_test.main()

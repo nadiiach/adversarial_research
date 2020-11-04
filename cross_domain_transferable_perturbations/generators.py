@@ -12,7 +12,7 @@ import numpy as np
 ngf = 64
 
 class GeneratorResnet(nn.Module):
-    def __init__(self, inception=False, data_dim='high'):
+    def __init__(self, channels=3, inception=False, data_dim='high'):
         '''
         :param inception: if True crop layer will be added to go from 3x300x300 t0 3x299x299.
         :param data_dim: for high dimentional dataset (imagenet) 6 resblocks will be add otherwise only 2.
@@ -23,7 +23,7 @@ class GeneratorResnet(nn.Module):
         # Input_size = 3, n, n
         self.block1 = nn.Sequential(
             nn.ReflectionPad2d(3),
-            nn.Conv2d(3, ngf, kernel_size=7, padding=0, bias=False),
+            nn.Conv2d(channels, ngf, kernel_size=7, padding=0, bias=False),
             nn.BatchNorm2d(ngf),
             nn.ReLU(True)
         )

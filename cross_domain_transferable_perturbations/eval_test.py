@@ -14,10 +14,9 @@ import torchvision.utils as vutils
 from cross_domain_transferable_perturbations.gaussian_smoothing import *
 from cross_domain_transferable_perturbations.utils import *
 from cross_domain_transferable_perturbations.process_imagenet import *
-
-def main(prefix=""):
+def main():
     parser = argparse.ArgumentParser(description='Cross Data Transferability')
-    parser.add_argument('--train_dir', default='imagenet',
+    parser.add_argument('--train_dir', default='paintings',
                         help='Generator Training Data: paintings, comics, ')
     parser.add_argument('--test_dir', default='datasets/imagenet/val',
                         help='ImageNet Validation Data')
@@ -26,16 +25,16 @@ def main(prefix=""):
     parser.add_argument('--measure_adv', action='store_true',
                         help='If not set then measuring only clean accuracy',
                         default=True)
-    parser.add_argument('--batch_size', type=int, default=8,
+    parser.add_argument('--batch_size', type=int, default=1,
                         help='Batch Size')
     parser.add_argument('--epochs', type=int, default=9,
                         help='Which Saving Instance to Evaluate')
     parser.add_argument('--eps', type=int, default=10,
                         help='Perturbation Budget')
-    parser.add_argument('--model_type', type=str, default='vgg16',
+    parser.add_argument('--model_type', type=str, default='res152',
                         help='Model against GAN is trained: vgg16, '
                              'vgg19, incv3, res152')
-    parser.add_argument('--model_t', type=str, default='res152',
+    parser.add_argument('--model_t', type=str, default='vgg16',
                         help='Model under attack : vgg16, vgg19, '
                              'incv3, res152, res50, dense201, sqz')
     parser.add_argument('--target', type=int, default=-1,
@@ -65,7 +64,7 @@ def main(prefix=""):
         img_size = 299 #300 #299
 
     if args.measure_adv:
-        netG = load_gan(args, prefix=prefix)
+        netG = load_gan(args, "")
         netG.to(device)
         netG.eval()
 
@@ -141,7 +140,14 @@ def main(prefix=""):
     print("Test loader {}".format(test_loader))
 
     for i, (img, label) in enumerate(test_loader):
+        imgs_repeat = 5
         img, label = img.to(device), label.to(device)
+        img = torch.cat([img] * imgs_repeat)
+        label = torch.cat([label] * imgs_repeat)
+        img = img.to(device)
+
+        clean_out = model_t(normalize(img.clone().detach()))
+        clean_acc += torch.sum(clean_out.argmax(dim=-1) == label).item()
 
         clean_out = model_t(normalize(img.clone().detach()))
         clean_acc += torch.sum(clean_out.argmax(dim=-1) == label).item()
@@ -163,6 +169,10 @@ def main(prefix=""):
         fool_rate += torch.sum(adv_out.argmax(dim=-1)
                                != clean_out.argmax(dim=-1)).item()
         # l_inf = torch.dist(img.view(-1), adv.view(-1), float('inf'))
+        assert torch.all(adv_noise[0].eq(adv_noise[1])) \
+               and torch.all(adv_noise[2].eq(adv_noise[3]))
+        print("Identical")
+
         if i == 0:
             vutils.save_image(
                 vutils.make_grid(adv_noise, normalize=True, scale_each=True),
@@ -173,6 +183,9 @@ def main(prefix=""):
             vutils.save_image(
                 vutils.make_grid(img, normalize=True, scale_each=True),
                 'org_{}_ep_{}.png'.format(args.model_type, args.epochs))
+
+        # print("Exiting stub..")
+        # exit()
 
         if i % 100 == 0:
             if args.measure_adv:

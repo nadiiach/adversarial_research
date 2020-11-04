@@ -14,8 +14,7 @@ import torchvision.utils as vutils
 from cross_domain_transferable_perturbations.gaussian_smoothing import *
 from cross_domain_transferable_perturbations.utils import *
 from cross_domain_transferable_perturbations.process_imagenet import *
-
-def main(prefix=""):
+def main():
     parser = argparse.ArgumentParser(description='Cross Data Transferability')
     parser.add_argument('--train_dir', default='imagenet',
                         help='Generator Training Data: paintings, comics, ')
@@ -26,7 +25,7 @@ def main(prefix=""):
     parser.add_argument('--measure_adv', action='store_true',
                         help='If not set then measuring only clean accuracy',
                         default=True)
-    parser.add_argument('--batch_size', type=int, default=8,
+    parser.add_argument('--batch_size', type=int, default=1,
                         help='Batch Size')
     parser.add_argument('--epochs', type=int, default=9,
                         help='Which Saving Instance to Evaluate')
@@ -45,7 +44,9 @@ def main(prefix=""):
     parser.add_argument('--gk', action='store_true',
                         help='Apply Gaussian Smoothings to GAN Output')
     parser.add_argument('--rl', action='store_true',
-                        help='Relativistic or Simple GAN', default=True)
+                        help='Relativstic or Simple GAN', default=True)
+    parser.add_argument('--attempts', type=int,
+                        help='How many times try to attack', default=10)
     args = parser.parse_args()
     print(args)
 
@@ -62,12 +63,11 @@ def main(prefix=""):
         img_size = 224
     else:
         scale_size = 300
-        img_size = 299 #300 #299
+        img_size = 300 #299
 
-    if args.measure_adv:
-        netG = load_gan(args, prefix=prefix)
-        netG.to(device)
-        netG.eval()
+    netG = load_gan(args, "div", channels=4)
+    netG.to(device)
+    netG.eval()
 
     model_t = load_model(args)
     model_t = model_t.to(device)
@@ -99,27 +99,6 @@ def main(prefix=""):
         test_set = fix_labels_nips(test_set, pytorch=True)
     else:
         test_set = fix_labels(test_set, os.path.join(args.test_dir, "val.txt"))
-    #
-    # class_to_idx = get_class_to_idx()
-    # img_to_idx = get_img_to_idx()
-    # img_to_class = get_img_to_class()
-    # imgs = []
-    # targets = []
-    # classes = []
-    #
-    # for img_tup in test_set.imgs:
-    #     path = img_tup[0]
-    #     imgname = path.split("/")[-1]
-    #     clasidx = img_to_idx[imgname]
-    #     tup = (path, clasidx)
-    #     imgs.append(tup)
-    #     targets.append(clasidx)
-    #     classes.append(img_to_class[imgname])
-    #
-    # test_set.class_to_idx = class_to_idx
-    # test_set.classes = classes
-    # test_set.targets = targets
-    # test_set.imgs = imgs
 
     test_loader = torch.utils.data.DataLoader(test_set,
                                               batch_size=args.batch_size,
@@ -143,36 +122,50 @@ def main(prefix=""):
     for i, (img, label) in enumerate(test_loader):
         img, label = img.to(device), label.to(device)
 
+        imgs_repeat = args.attempts
+        img = torch.cat([img] * imgs_repeat)
+        label = torch.cat([label] * imgs_repeat)
+
+        s = img.shape
+        noise = torch.rand((s[0], 1, s[2], s[3]))
+        assert not torch.all(noise[0].eq(noise[1]))
+        img = img.to(device)
+        noise = noise.to(device)
+        imgwnoise = torch.cat((img, noise), 1)
+        imgwnoise = imgwnoise.to(device)
         clean_out = model_t(normalize(img.clone().detach()))
-        clean_acc += torch.sum(clean_out.argmax(dim=-1) == label).item()
-
-
+        out = torch.sum(clean_out.argmax(dim=-1) == label).item()
+        clean_res = 1 if out >= 1 else 0
+        clean_acc += clean_res
         # Unrestricted Adversary
-        adv = netG(img)
-        adv_noise = adv.clone()
+        adv = netG(imgwnoise)
+
         # Apply smoothing
         if args.gk:
             adv = kernel(adv)
 
         # Projection
+        adv_noise = adv.clone()
+
         adv = torch.min(torch.max(adv, img - eps), img + eps)
         adv = torch.clamp(adv, 0.0, 1.0)
 
         adv_out = model_t(normalize(adv.clone().detach()))
-        adv_acc += torch.sum(adv_out.argmax(dim=-1) == label).item()
-        fool_rate += torch.sum(adv_out.argmax(dim=-1)
-                               != clean_out.argmax(dim=-1)).item()
-        # l_inf = torch.dist(img.view(-1), adv.view(-1), float('inf'))
+        adv_sum = torch.sum(adv_out.argmax(dim=-1) == label).item()
+        adv_res = 0 if adv_sum < args.attempts else 1
+        adv_acc += adv_res
+        fool_out = torch.sum(adv_out.argmax(dim=-1) != clean_out.argmax(dim=-1)).item()
+        fool_rate += 1 if fool_out >= 1 else 0
         if i == 0:
             vutils.save_image(
                 vutils.make_grid(adv_noise, normalize=True, scale_each=True),
-                'noise_{}_ep_{}.png'.format(args.model_type, args.epochs))
+                'noise.png')
             vutils.save_image(
                 vutils.make_grid(adv, normalize=True, scale_each=True),
-                'adv_{}_ep_{}.png'.format(args.model_type, args.epochs))
+                'adv.png')
             vutils.save_image(
                 vutils.make_grid(img, normalize=True, scale_each=True),
-                'org_{}_ep_{}.png'.format(args.model_type, args.epochs))
+                'org.png')
 
         if i % 100 == 0:
             if args.measure_adv:
@@ -180,6 +173,10 @@ def main(prefix=""):
                       .format(i, (img - adv).max() * 255))
             else:
                 print('At Batch:{}'.format(i))
+
+        if i == 10000:
+            test_size = 10000
+            break
 
     print('Clean:{0:.3%}\t Adversarial :{1:.3%}\t Fooling Rate:{2:.3%}'.format(
         clean_acc / test_size, adv_acc / test_size, fool_rate / test_size))

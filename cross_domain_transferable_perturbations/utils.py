@@ -7,11 +7,11 @@ from matplotlib import pyplot as plt
 import cv2
 # Load a particular generator
 
-def _get_path(args, new):
+def _get_path(args, prefix):
     if args.rl:
         path = 'cross_domain_transferable_perturbations/' \
                'saved_models/{}netG_{}_{}_{}_{}_{}_rl.pth'.format(
-                    "new_" if new else "",
+                    "{}_".format(prefix) if len(prefix) > 0 else "",
                     args.target,
                     args.attack_type,
                     args.model_type,
@@ -21,7 +21,7 @@ def _get_path(args, new):
         path = '/mnt/Vol2TBSabrentRoc/Projects/adversarial_research/' \
                 'cross_domain_transferable_perturbations/'\
                 'saved_models/{}netG_{}_{}_{}_{}_{}.pth'.format(
-                        "new_" if new else "",
+                        "{}_".format(prefix) if len(prefix) > 0 else "",
                         args.target,
                         args.attack_type,
                         args.model_type,
@@ -29,12 +29,12 @@ def _get_path(args, new):
                         args.epochs)
     return path
 
-def load_gan(args, new=False):
+def load_gan(args, prefix, channels=3):
     # Load Generator
     if args.model_type == 'incv3':
-        netG = GeneratorResnet(inception=True)
+        netG = GeneratorResnet(inception=True, channels=channels)
     else:
-        netG = GeneratorResnet()
+        netG = GeneratorResnet(channels=channels)
     print('Label: {} \t Attack: {} dependent \t Model: {} '
           '\t Distribution: {} \t Saving instance: {}'.format(args.target,
                                                                args.attack_type,
@@ -42,11 +42,11 @@ def load_gan(args, new=False):
                                                                args.train_dir,
                                                                args.epochs))
     try:
-        path = _get_path(args, new)
+        path = _get_path(args, prefix)
         netG.load_state_dict(torch.load(path))
     except:
         print("{} failed".format(path))
-        path = _get_path(args, ~new)
+        path = _get_path(args, prefix)
         netG.load_state_dict(torch.load(path))
 
     print("Loaded {}".format(path))
@@ -195,3 +195,16 @@ def save_img(img_tensor, args, suffix, epoch, folder, name, save_npy=True):
 
     print("Saved {}".format(figpath))
     print("Saved {}".format(npypath))
+
+def img_noise(img_size, args, device, batch_size, channels=1):
+    noise = np.random.uniform(0, 1, img_size * img_size * channels)
+    # Save noise
+    # np.save('saved_models/noise_{}_{}_{}_rl'.format(args.target,
+    #                                                 args.model_type,
+    #                                                 args.train_dir), noise)
+    im_noise = np.reshape(noise, (channels, img_size, img_size))
+    im_noise = im_noise[np.newaxis, :, :, :]
+    im_noise_tr = np.tile(im_noise, (batch_size, 1, 1, 1))
+    noise_tensor_tr = torch.from_numpy(im_noise_tr).\
+                type(torch.FloatTensor).to(device)
+    return noise_tensor_tr
