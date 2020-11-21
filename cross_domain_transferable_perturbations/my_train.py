@@ -10,10 +10,13 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
-from cross_domain_transferable_perturbations.generators import GeneratorResnet
-from cross_domain_transferable_perturbations import utils
-from utils import *
-import cv2
+
+try:
+    from cross_domain_transferable_perturbations.generators import GeneratorResnet
+    from cross_domain_transferable_perturbations import utils
+except:
+    from generators import GeneratorResnet
+    import utils
 
 parser = argparse.ArgumentParser(description='Cross Data Transferability')
 parser.add_argument('--train_dir', default='imagenet',
@@ -87,8 +90,7 @@ data_transform_others = transforms.Compose([
 ])
 
 train_dir = args.train_dir
-train_set_vgg16_19_res152 = datasets.ImageFolder(train_dir,
-                                                 data_transform_vgg16_19_res152)
+train_set_vgg16_19_res152 = datasets.ImageFolder(train_dir, data_transform_vgg16_19_res152)
 train_loader_vgg16_19_res152 = torch.utils.data.DataLoader(
     train_set_vgg16_19_res152,
     batch_size=args.batch_size,
