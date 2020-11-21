@@ -1,6 +1,11 @@
 import torch
 import torchvision
-from cross_domain_transferable_perturbations.generators import GeneratorResnet
+
+try:
+    from cross_domain_transferable_perturbations.generators import GeneratorResnet
+except:
+    from generators import GeneratorResnet
+
 import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt

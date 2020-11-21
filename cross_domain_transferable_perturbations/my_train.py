@@ -16,7 +16,7 @@ try:
     from cross_domain_transferable_perturbations import utils
 except:
     from generators import GeneratorResnet
-    import utils
+    from utils
 
 parser = argparse.ArgumentParser(description='Cross Data Transferability')
 parser.add_argument('--train_dir', default='imagenet',
@@ -51,7 +51,7 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 ####################
 discriminators_size_larger = {
     "vgg16": torchvision.models.vgg16(pretrained=True),
-    #"res152": torchvision.models.resnet152(pretrained=True)
+    # "res152": torchvision.models.resnet152(pretrained=True)
 }
 
 discriminators_size_smaller = {
@@ -217,12 +217,12 @@ for epoch in range(args.epochs):
         running_loss += abs(loss.item())
 
     discrimins = "_".join(list(discriminators_size_larger.keys()) + \
-                   list(discriminators_size_smaller.keys()))
+                          list(discriminators_size_smaller.keys()))
     savestr = 'saved_models/new_netG_{}_{}_{}_{}_{}_rl.pth'.format(args.target,
-                                                               args.attack_type,
-                                                               discrimins,
-                                                               args.train_dir,
-                                                               epoch)
+                                                                   args.attack_type,
+                                                                   discrimins,
+                                                                   args.train_dir,
+                                                                   epoch)
     torch.save(netG.state_dict(), savestr)
 
     # Save noise
@@ -243,4 +243,3 @@ for epoch in range(args.epochs):
 
         utils.save_img(adv1, args, "others", epoch, "adv_pics", "imgwnoise",
                        save_npy=False)
-
