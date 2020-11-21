@@ -16,7 +16,7 @@ try:
     from cross_domain_transferable_perturbations import utils
 except:
     from generators import GeneratorResnet
-    from utils
+    import utils
 
 parser = argparse.ArgumentParser(description='Cross Data Transferability')
 parser.add_argument('--train_dir', default='imagenet',
