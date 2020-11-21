@@ -30,8 +30,13 @@ parser.add_argument('--model_type', type=str, default='vgg16',
 parser.add_argument('--attack_type', type=str, default='img',
             help='Training is either img/noise dependent')
 parser.add_argument('--target', type=int, default=-1, help='-1 if untargeted')
+parser.add_argument('--logdet', action='store_true', help="Van Neumann relaxation")
+parser.add_argument('--save', action='store_true', help="save models")
 args = parser.parse_args()
 print(args)
+
+if not args.save:
+    print("WARNING: debug mode!!! Models won't be saved.")
 
 # Normalize (0-1)
 eps = args.eps/255
@@ -142,7 +147,17 @@ for epoch in range(args.epochs):
 
         f = adv[:int(img.shape[0]/2)]
         s = adv[int(img.shape[0]/2):]
-        diff = torch.norm(f - s)
+
+        if not args.logdet:
+            diff = torch.norm(f - s)
+        else:
+            # for each img compute
+            # (f[i] - s[i]) * (f[i] - s[i])^T
+            # sum over all i logdet (f[i] - s[i]) * (f[i] - s[i])^T   try add or subtract...
+            # convex relaxation of Von Neumann entropy
+            # Try Wassertain
+
+            pass
 
         adv_out = model(normalize(adv))
         img_out = model(normalize(img))
@@ -157,9 +172,12 @@ for epoch in range(args.epochs):
             running_loss = 0
         running_loss += abs(loss.item())
 
-    torch.save(netG.state_dict(), 'saved_models/div_netG_{}_{}_{}_{}_{}_rl.pth'
-               .format(args.target, args.attack_type, args.model_type,
-                       args.train_dir, epoch))
+    if args.save:
+        torch.save(netG.state_dict(), 'saved_models/div_netG_{}_{}_{}_{}_{}_rl.pth'
+                   .format(args.target, args.attack_type, args.model_type,
+                           args.train_dir, epoch))
+    else:
+        print("Warning: model is not saved! save flag wasn't turned on.")
 
     # Save noise
     if args.attack_type == 'noise':

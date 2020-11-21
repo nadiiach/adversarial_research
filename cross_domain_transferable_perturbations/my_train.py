@@ -47,8 +47,8 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 # Model
 ####################
 discriminators_size_larger = {
-    #"vgg16": torchvision.models.vgg16(pretrained=True),
-    "res152": torchvision.models.resnet152(pretrained=True)
+    "vgg16": torchvision.models.vgg16(pretrained=True),
+    #"res152": torchvision.models.resnet152(pretrained=True)
 }
 
 discriminators_size_smaller = {
@@ -196,9 +196,14 @@ for epoch in range(args.epochs):
                 advs_logits_out.append(model(utils.normalize(adv1)))
                 imgs_logits_out.append(model(utils.normalize(img1)))
 
-            loss = 0
+            # loss = 0
+            # for adv_out, img_out, label in zip(advs_logits_out, imgs_logits_out, clean_labels):
+            #     loss += -criterion(adv_out - img_out, label)
+
+            losses = []
             for adv_out, img_out, label in zip(advs_logits_out, imgs_logits_out, clean_labels):
-                loss += -criterion(adv_out - img_out, label)
+                losses.append(-criterion(adv_out - img_out, label))
+            loss = min(losses)
 
         loss.backward()
         optimG.step()
