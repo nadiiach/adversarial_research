@@ -250,7 +250,7 @@ for epoch in range(args.epochs):
 
         if iteration % PRINT_FREQ == 0:
             ll = running_loss / 10
-            print('Iteration: {}, Epoch: {} \t Batch: {} \t loss: {2:.5f}'.format(
+            print('Iteration: {0}, Epoch: {1} \t Batch: {2} \t loss: {3:.5f}'.format(
                 iteration, epoch, i, running_loss / PRINT_FREQ))
 
             utils.save_snapshot_and_log(netG, args.foldname, args.target, args.attack_type,
