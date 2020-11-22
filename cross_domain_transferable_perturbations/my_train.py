@@ -94,7 +94,7 @@ train_dir = args.train_dir
 train_set_vgg16_19_res152 = datasets.ImageFolder(train_dir, data_transform_vgg16_19_res152)
 
 if args.subset:
-    dataset_subset = torch.utils.data.Subset(
+    train_set_vgg16_19_res152 = torch.utils.data.Subset(
         train_set_vgg16_19_res152, np.random.choice(
             len(train_set_vgg16_19_res152), args.subset, replace=False))
     print("Sampled {} images".format(args.subset))
@@ -110,7 +110,7 @@ train_loader_vgg16_19_res152 = torch.utils.data.DataLoader(
 train_set_others = datasets.ImageFolder(train_dir, data_transform_others)
 
 if args.subset:
-    dataset_subset = torch.utils.data.Subset(
+    train_set_others = torch.utils.data.Subset(
         train_set_others, np.random.choice(
             len(train_set_others), args.subset, replace=False))
     print("Sampled {} images".format(args.subset))
