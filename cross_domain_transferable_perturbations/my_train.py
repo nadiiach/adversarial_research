@@ -114,13 +114,13 @@ if args.subset:
             len(train_set_others), args.subset, replace=False))
     print("Sampled {} images".format(args.subset))
 
-train_loader_others = torch.utils.data.DataLoader(train_loader_others,
+train_loader_others = torch.utils.data.DataLoader(train_set_others,
                                                   batch_size=args.batch_size,
                                                   shuffle=True, num_workers=4,
                                                   pin_memory=True)
 
 
-if not len(train_loader_vgg16_19_res152) == len(train_set_others):
+if not len(train_loader_vgg16_19_res152) == len(train_loader_others):
     print("len(train_loader_vgg16_19_res152)={} == len(train_set_others)={}".
           format(len(train_loader_vgg16_19_res152), len(train_set_others)))
     exit()
