@@ -240,7 +240,7 @@ for epoch in range(args.epochs):
         loss.backward()
         optimG.step()
 
-        if iteration % 2500 == 0 and iteration != 0:
+        if iteration % 1000 == 0 and iteration != 0:
             if args.save:
                 utils.save_snapshot_and_log(netG, args.foldname, args.target,  args.attack_type,
                                     args.train_dir, discrimins, st="{}_iter_{}_bs"
