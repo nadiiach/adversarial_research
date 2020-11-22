@@ -100,11 +100,10 @@ if args.subset:
     print("Sampled {} images".format(args.subset))
 
 
-train_loader_vgg16_19_res152 = torch.utils.data.DataLoader(
-                                train_set_vgg16_19_res152,
-                                batch_size=args.batch_size,
-                                shuffle=True, num_workers=4,
-                                pin_memory=True)
+train_loader_vgg16_19_res152 = torch.utils.data.DataLoader(train_set_vgg16_19_res152,
+                                                        batch_size=args.batch_size,
+                                                        shuffle=True, num_workers=4,
+                                                        pin_memory=True)
 
 
 train_set_others = datasets.ImageFolder(train_dir, data_transform_others)
@@ -115,7 +114,7 @@ if args.subset:
             len(train_set_others), args.subset, replace=False))
     print("Sampled {} images".format(args.subset))
 
-train_loader_others = torch.utils.data.DataLoader(train_set_others,
+train_loader_others = torch.utils.data.DataLoader(train_loader_others,
                                                   batch_size=args.batch_size,
                                                   shuffle=True, num_workers=4,
                                                   pin_memory=True)
