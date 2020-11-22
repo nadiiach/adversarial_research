@@ -121,7 +121,10 @@ train_loader_others = torch.utils.data.DataLoader(train_set_others,
                                                   pin_memory=True)
 
 
-assert len(train_loader_vgg16_19_res152) == len(train_set_others)
+if not len(train_loader_vgg16_19_res152) == len(train_set_others):
+    print("len(train_loader_vgg16_19_res152)={} == len(train_set_others)={}".
+          format(len(train_loader_vgg16_19_res152), len(train_set_others)))
+    exit()
 train_size = len(train_loader_vgg16_19_res152)
 print('Number of batches:', train_size)
 # Loss
