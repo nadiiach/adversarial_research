@@ -180,8 +180,8 @@ for epoch in range(args.epochs):
 
         if i % 5000 == 0 and i != 0:
             if args.save:
-                utils.save_snapshot(netG, args.foldname, args.target,  args.attack_type,
-                                    args.train_dir, args.model_type, "{}_iter_{}_bs"
+                utils.save_snapshot_and_log(netG, args.foldname, args.target,  args.attack_type,
+                                    args.train_dir, args.model_type, laststr="{}_iter_{}_bs"
                                     .format(i, args.batch_size))
             else:
                 print("Warning: model is not saved!")
@@ -194,8 +194,8 @@ for epoch in range(args.epochs):
 
 
     if args.save:
-        utils.save_snapshot(netG, args.foldname, args.target,  args.attack_type,
-                            args.train_dir, args.model_type, "{}_epoch".format(epoch))
+        utils.save_snapshot_and_log(netG, args.foldname, args.target,  args.attack_type,
+                            args.train_dir, args.model_type, laststr="{}_epoch".format(epoch))
     else:
         print("Warning: model is not saved!")
 

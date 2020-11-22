@@ -215,11 +215,21 @@ def img_noise(img_size, args, device, batch_size, channels=1):
     return noise_tensor_tr
 
 
-def save_snapshot(netG, foldname, target,  attack_type,
-                  train_dir, model_name, laststr, verbose=False):
+def save_snapshot_and_log(netG, foldname, target, attack_type,
+                          train_dir, model_name, st="", verbose=False, logonly=False):
+
+    if logonly:
+        logstr = 'saved_models/{}/{}_netG_{}_{}_{}_{}_rl.log'.format(foldname, foldname, target,
+                                                                     attack_type, model_name,
+                                                                     train_dir)
+        with open(logstr, "w+") as f:
+            f.write(st + '\n')
+
+        return
+
     savestr = 'saved_models/{}/{}_netG_{}_{}_{}_{}_{}_rl.pth'.format(foldname, foldname, target,
                                                                      attack_type, model_name,
-                                                                     train_dir, laststr)
+                                                                     train_dir, st)
     pp = 'saved_models/{}'.format(foldname)
     if not os.path.exists(pp):
         os.mkdir(pp)

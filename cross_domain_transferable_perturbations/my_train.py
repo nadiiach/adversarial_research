@@ -235,10 +235,10 @@ for epoch in range(args.epochs):
         loss.backward()
         optimG.step()
 
-        if i % 5000 == 0 and i != 0:
+        if i % 2500 == 0 and i != 0:
             if args.save:
-                utils.save_snapshot(netG, args.foldname, args.target,  args.attack_type,
-                                    args.train_dir, discrimins, "{}_iter_{}_bs"
+                utils.save_snapshot_and_log(netG, args.foldname, args.target,  args.attack_type,
+                                    args.train_dir, discrimins, st="{}_iter_{}_bs"
                                     .format(i, args.batch_size))
             else:
                 print("Warning: model is not saved!")
@@ -247,12 +247,18 @@ for epoch in range(args.epochs):
             print('Epoch: {0} \t Batch: {1} \t loss: {2:.5f}'.format(
                 epoch, i, running_loss / 100))
             running_loss = 0
+
+        if i % 10 == 0:
+            utils.save_snapshot_and_log(netG, args.foldname, args.target, args.attack_type,
+                                        args.train_dir, discrimins,
+                                        st="{} {}".format(i, loss), logonly=True)
+
         running_loss += abs(loss.item())
 
     # saving snapshorts for epochs
     if args.save:
-        utils.save_snapshot(netG, args.foldname, args.target,  args.attack_type,
-                            args.train_dir, discrimins, "{}_epoch".format(epoch))
+        utils.save_snapshot_and_log(netG, args.foldname, args.target,  args.attack_type,
+                            args.train_dir, discrimins, st="{}_epoch".format(epoch))
     else:
         print("Warning: model is not saved!")
 
