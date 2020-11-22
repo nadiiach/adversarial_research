@@ -18,6 +18,9 @@ except:
     from generators import GeneratorResnet
     import utils
 
+PRINT_FREQ = 10
+
+
 parser = argparse.ArgumentParser(description='Cross Data Transferability')
 parser.add_argument('--train_dir', help='comics, imagenet', required=True)
 parser.add_argument('--batch_size', type=int, default=15, help='Number of trainig samples/batch')
@@ -180,9 +183,11 @@ print('Label: {} \t Attack: {} dependent \t Model: {} \t '
 discrimins = "_".join(list(discriminators_size_larger.keys()) + \
                       list(discriminators_size_smaller.keys()))
 
+iteration = -1
 for epoch in range(args.epochs):
     running_loss = 0
     for i in range(len(train_loader_vgg16_19_res152)):
+        iteration += 1
         (img1, _) = next(iter(train_loader_vgg16_19_res152))
         (img2, _) = next(iter(train_loader_others))
         img1 = img1.to(device)
@@ -235,25 +240,26 @@ for epoch in range(args.epochs):
         loss.backward()
         optimG.step()
 
-        if i % 2500 == 0 and i != 0:
+        if iteration % 2500 == 0 and iteration != 0:
             if args.save:
                 utils.save_snapshot_and_log(netG, args.foldname, args.target,  args.attack_type,
                                     args.train_dir, discrimins, st="{}_iter_{}_bs"
-                                    .format(i, args.batch_size))
+                                    .format(iteration, args.batch_size))
             else:
                 print("Warning: model is not saved!")
 
-        if i % 10 == 9:
-            print('Epoch: {0} \t Batch: {1} \t loss: {2:.5f}'.format(
-                epoch, i, running_loss / 100))
-            running_loss = 0
+        if iteration % PRINT_FREQ == 0:
+            ll = running_loss / 10
+            print('Iteration: {}, Epoch: {} \t Batch: {} \t loss: {2:.5f}'.format(
+                iteration, epoch, i, running_loss / PRINT_FREQ))
 
-        if i % 10 == 0:
             utils.save_snapshot_and_log(netG, args.foldname, args.target, args.attack_type,
                                         args.train_dir, discrimins,
-                                        st="{} {}".format(i, loss), logonly=True)
+                                        st="{} {}".format(iteration, ll), logonly=True)
+            running_loss = 0
 
         running_loss += abs(loss.item())
+
 
     # saving snapshorts for epochs
     if args.save:

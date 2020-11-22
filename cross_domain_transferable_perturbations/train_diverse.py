@@ -20,6 +20,8 @@ except:
     import utils
     from utils import *
 
+PRINT_FREQ = 10
+
 parser = argparse.ArgumentParser(description='Cross Data Transferability')
 parser.add_argument('--train_dir', default='imagenet', help='comics, imagenet')
 parser.add_argument('--batch_size', type=int, default=8, help='Number of trainig samples/batch')
@@ -123,9 +125,14 @@ print('Label: {} \t Attack: {} dependent \t Model: {} \t '
                                                         args.model_type,
                                                         args.train_dir,
                                                         args.epochs))
+
+iteration = -1
+
 for epoch in range(args.epochs):
     running_loss = 0
     for i, (img, _) in enumerate(train_loader):
+        iteration += 1
+
         img = torch.cat([img] * 2)
         s = img.shape
         noise = torch.rand((s[0], 1, s[2], s[3]))
@@ -178,18 +185,23 @@ for epoch in range(args.epochs):
         loss.backward()
         optimG.step()
 
-        if i % 5000 == 0 and i != 0:
+        if iteration % 5000 == 0 and iteration != 0:
             if args.save:
                 utils.save_snapshot_and_log(netG, args.foldname, args.target,  args.attack_type,
                                     args.train_dir, args.model_type, laststr="{}_iter_{}_bs"
-                                    .format(i, args.batch_size))
+                                    .format(iteration, args.batch_size))
             else:
                 print("Warning: model is not saved!")
 
-        if i % 10 == 9:
-            print('Epoch: {0} \t Batch: {1} \t loss: {2:.5f}'.format(
-                epoch, i, running_loss / 100))
+        if iteration % PRINT_FREQ == 0:
+            ll = running_loss / 10
+            print('Iteration: {}, Epoch: {} \t Batch: {} \t loss: {2:.5f}'.format(
+                iteration, epoch, i, running_loss / PRINT_FREQ))
+            utils.save_snapshot_and_log(netG, args.foldname, args.target, args.attack_type,
+                                        args.train_dir, args.model_type,
+                                        st="{} {}".format(iteration, ll), logonly=True)
             running_loss = 0
+
         running_loss += abs(loss.item())
 
 

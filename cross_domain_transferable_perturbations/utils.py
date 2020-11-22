@@ -10,6 +10,10 @@ import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
 import cv2
+from datetime import datetime
+
+now = datetime.now() # current date and time
+
 # Load a particular generator
 
 def _get_path(args, prefix):
@@ -216,9 +220,15 @@ def img_noise(img_size, args, device, batch_size, channels=1):
 
 
 def save_snapshot_and_log(netG, foldname, target, attack_type,
-                          train_dir, model_name, st="", verbose=False, logonly=False):
+                          train_dir, model_name, st="", verbose=False, logonly=False, iteration=-1):
 
     pp = 'saved_models/{}'.format(foldname)
+
+    if iteration == 0 and os.path.exists(pp):
+        timestr = now.strftime("%d_%m-%H_%M")
+        os.rename(pp, pp + timestr + "_bak")
+        assert not os.path.exists(pp)
+
     if not os.path.exists(pp):
         os.mkdir(pp)
 
