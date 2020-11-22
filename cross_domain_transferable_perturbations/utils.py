@@ -218,6 +218,10 @@ def img_noise(img_size, args, device, batch_size, channels=1):
 def save_snapshot_and_log(netG, foldname, target, attack_type,
                           train_dir, model_name, st="", verbose=False, logonly=False):
 
+    pp = 'saved_models/{}'.format(foldname)
+    if not os.path.exists(pp):
+        os.mkdir(pp)
+
     ds = train_dir.split("/")[-1]
 
     if logonly:
@@ -231,10 +235,6 @@ def save_snapshot_and_log(netG, foldname, target, attack_type,
     savestr = 'saved_models/{}/{}_netG_{}_{}_{}_{}_{}_rl.pth'.format(foldname, foldname, target,
                                                                      attack_type, model_name,
                                                                      ds, st)
-    pp = 'saved_models/{}'.format(foldname)
-    if not os.path.exists(pp):
-        os.mkdir(pp)
-
     torch.save(netG.state_dict(), savestr)
     if not verbose:
         print("Model saved to {}".format(savestr))
