@@ -15,16 +15,11 @@ from cross_domain_transferable_perturbations.utils import *
 
 
 parser = argparse.ArgumentParser(description='Cross Data Transferability')
-parser.add_argument('--train_dir', default='imagenet',
-            help='comics, imagenet')
-parser.add_argument('--batch_size', type=int, default=8,
-            help='Number of trainig samples/batch')
-parser.add_argument('--epochs', type=int, default=10,
-            help='Number of training epochs')
-parser.add_argument('--lr', type=float, default=0.0002,
-            help='Initial learning rate for adam')
-parser.add_argument('--eps', type=int, default=10,
-            help='Perturbation Budget')
+parser.add_argument('--train_dir', default='imagenet', help='comics, imagenet')
+parser.add_argument('--batch_size', type=int, default=8, help='Number of trainig samples/batch')
+parser.add_argument('--epochs', type=int, default=10, help='Number of training epochs')
+parser.add_argument('--lr', type=float, default=0.0002, help='Initial learning rate for adam')
+parser.add_argument('--eps', type=int, default=10, help='Perturbation Budget')
 parser.add_argument('--model_type', type=str, default='vgg16',
             help='Model against GAN is trained: vgg16, vgg19, incv3, res152')
 parser.add_argument('--attack_type', type=str, default='img',
@@ -32,6 +27,9 @@ parser.add_argument('--attack_type', type=str, default='img',
 parser.add_argument('--target', type=int, default=-1, help='-1 if untargeted')
 parser.add_argument('--logdet', action='store_true', help="Van Neumann relaxation")
 parser.add_argument('--save', action='store_true', help="save models")
+parser.add_argument('--foldname',  type=str, required=True,
+                    help="In what folder to save trained model in saved_models?")
+
 args = parser.parse_args()
 print(args)
 

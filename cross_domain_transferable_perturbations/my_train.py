@@ -31,9 +31,14 @@ parser.add_argument('--attack_type', type=str, default='img',
                     help='Training is either img/noise dependent')
 parser.add_argument('--target', type=int, default=-1, help='-1 if untargeted')
 parser.add_argument('--imgsave', action='store_true')
+parser.add_argument('--save', action='store_true')
+parser.add_argument('--foldname',  type=str, required=True,
+                    help="In what folder to save trained model in saved_models?")
 
 args = parser.parse_args()
 print(args)
+if not args.save:
+    print("Warning: model will NOT be saved")
 
 # Normalize (0-1)
 eps = args.eps / 255
@@ -116,7 +121,7 @@ if args.attack_type == 'noise':
     np.save('saved_models/noise_{}_{}_{}_vgg16_19_res152_rl'.format(args.target,
                                                                     args.model_type,
                                                                     args.train_dir),
-            noise_vgg16_19_res152)
+                                                                    noise_vgg16_19_res152)
 
     np.save('saved_models/noise_{}_{}_{}_others_rl'.format(args.target,
                                                            args.model_type,
@@ -218,7 +223,11 @@ for epoch in range(args.epochs):
                                                                    discrimins,
                                                                    args.train_dir,
                                                                    epoch)
-    torch.save(netG.state_dict(), savestr)
+
+    if args.save:
+        torch.save(netG.state_dict(), savestr)
+    else:
+        print("Warning: model is not saved!")
 
     # Save noise
     if args.attack_type == 'noise':
