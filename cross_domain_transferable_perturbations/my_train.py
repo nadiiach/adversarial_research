@@ -241,12 +241,17 @@ for epoch in range(args.epochs):
                           list(discriminators_size_smaller.keys()))
 
 
-    savestr = 'saved_models/{}/{}_netG_{}_{}_{}_{}_{}_rl.pth'.format(args.foldname, args.foldname,
-                                                                     args.target, args.attack_type,
-                                                                     discrimins, args.train_dir,
-                                                                     epoch)
-
     if args.save:
+        savestr = 'saved_models/{}/{}_netG_{}_{}_{}_{}_{}_rl.pth'.format(args.foldname,
+                                                                         args.foldname,
+                                                                         args.target,
+                                                                         args.attack_type,
+                                                                         discrimins, args.train_dir,
+                                                                         epoch)
+        pp = 'saved_models/{}'.format(args.foldname)
+        if not os.path.exists(pp):
+            os.mkdir(pp)
+
         torch.save(netG.state_dict(), savestr)
     else:
         print("Warning: model is not saved!")

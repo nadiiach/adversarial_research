@@ -179,11 +179,20 @@ for epoch in range(args.epochs):
         running_loss += abs(loss.item())
 
     if args.save:
-        torch.save(netG.state_dict(), 'saved_models/div_netG_{}_{}_{}_{}_{}_rl.pth'
-                   .format(args.target, args.attack_type, args.model_type,
-                           args.train_dir, epoch))
+        savestr = 'saved_models/{}/{}_netG_{}_{}_{}_{}_{}_rl.pth'.format(args.foldname,
+                                                                         args.foldname,
+                                                                         args.target,
+                                                                         args.attack_type,
+                                                                         args.model_type,
+                                                                         args.train_dir,
+                                                                         epoch)
+        pp = 'saved_models/{}'.format(args.foldname)
+        if not os.path.exists(pp):
+            os.mkdir(pp)
+
+        torch.save(netG.state_dict(), savestr)
     else:
-        print("Warning: model is not saved! save flag wasn't turned on.")
+        print("Warning: model is not saved!")
 
     # Save noise
     if args.attack_type == 'noise':
