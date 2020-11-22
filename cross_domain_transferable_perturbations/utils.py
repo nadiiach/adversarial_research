@@ -240,6 +240,10 @@ def save_snapshot_and_log(netG, foldname, target, attack_type,
     if logonly:
         logstr = 'saved_models/{}/{}_netG_{}_{}_{}_{}_rl.log'.format(foldname, foldname, target,
                                                                      attack_type, model_name, ds)
+
+        if iteration == 0 and os.path.exists(logstr):
+            os.remove(logstr)
+
         with open(logstr, "a+") as f:
             f.write(st + '\n')
 

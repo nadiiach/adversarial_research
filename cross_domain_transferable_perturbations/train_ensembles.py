@@ -244,7 +244,7 @@ for epoch in range(args.epochs):
             if args.save:
                 utils.save_snapshot_and_log(netG, args.foldname, args.target,  args.attack_type,
                                     args.train_dir, discrimins, st="{}_iter_{}_bs"
-                                    .format(iteration, args.batch_size))
+                                    .format(iteration, args.batch_size), iteration=iteration)
             else:
                 print("Warning: model is not saved!")
 
@@ -255,7 +255,8 @@ for epoch in range(args.epochs):
 
             utils.save_snapshot_and_log(netG, args.foldname, args.target, args.attack_type,
                                         args.train_dir, discrimins,
-                                        st="{} {}".format(iteration, ll), logonly=True)
+                                        st="{} {}".format(iteration, ll), logonly=True,
+                                        iteration=iteration)
             running_loss = 0
 
         running_loss += abs(loss.item())
@@ -264,7 +265,8 @@ for epoch in range(args.epochs):
     # saving snapshorts for epochs
     if args.save:
         utils.save_snapshot_and_log(netG, args.foldname, args.target,  args.attack_type,
-                            args.train_dir, discrimins, st="{}_epoch".format(epoch))
+                            args.train_dir, discrimins, st="{}_epoch".format(epoch),
+                                    iteration=iteration)
     else:
         print("Warning: model is not saved!")
 
