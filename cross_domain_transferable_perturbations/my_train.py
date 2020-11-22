@@ -20,10 +20,11 @@ except:
 
 parser = argparse.ArgumentParser(description='Cross Data Transferability')
 parser.add_argument('--train_dir', help='comics, imagenet', required=True)
-parser.add_argument('--batch_size', type=int, default=15,help='Number of trainig samples/batch')
+parser.add_argument('--batch_size', type=int, default=15, help='Number of trainig samples/batch')
 parser.add_argument('--epochs', type=int, default=10, help='Number of training epochs')
 parser.add_argument('--lr', type=float, default=0.0002, help='Initial learning rate for adam')
 parser.add_argument('--eps', type=int, default=10, help='Perturbation Budget')
+parser.add_argument('--subset', type=int, help='Subset of dataset for testing')
 parser.add_argument('--model_type', type=str, default='res152_incv3',
                         help='Model against GAN is trained: vgg16, '
                          'vgg19, incv3, res152')
@@ -91,17 +92,35 @@ data_transform_others = transforms.Compose([
 
 train_dir = args.train_dir
 train_set_vgg16_19_res152 = datasets.ImageFolder(train_dir, data_transform_vgg16_19_res152)
+
+if args.subset:
+    dataset_subset = torch.utils.data.Subset(
+        train_set_vgg16_19_res152, np.random.choice(
+            len(train_set_vgg16_19_res152), args.subset, replace=False))
+    print("Sampled {} images".format(args.subset))
+
+
 train_loader_vgg16_19_res152 = torch.utils.data.DataLoader(
-    train_set_vgg16_19_res152,
-    batch_size=args.batch_size,
-    shuffle=True, num_workers=4,
-    pin_memory=True)
+                                train_set_vgg16_19_res152,
+                                batch_size=args.batch_size,
+                                shuffle=True, num_workers=4,
+                                pin_memory=True)
+
 
 train_set_others = datasets.ImageFolder(train_dir, data_transform_others)
+
+if args.subset:
+    dataset_subset = torch.utils.data.Subset(
+        train_set_others, np.random.choice(
+            len(train_set_others), args.subset, replace=False))
+    print("Sampled {} images".format(args.subset))
+
 train_loader_others = torch.utils.data.DataLoader(train_set_others,
                                                   batch_size=args.batch_size,
                                                   shuffle=True, num_workers=4,
                                                   pin_memory=True)
+
+
 
 train_size = len(train_loader_vgg16_19_res152)
 print('Training data size:', train_size)

@@ -27,6 +27,7 @@ parser.add_argument('--attack_type', type=str, default='img',
 parser.add_argument('--target', type=int, default=-1, help='-1 if untargeted')
 parser.add_argument('--logdet', action='store_true', help="Van Neumann relaxation")
 parser.add_argument('--save', action='store_true', help="save models")
+parser.add_argument('--subset', type=int, help='Subset of dataset for testing')
 parser.add_argument('--foldname',  type=str, required=True,
                     help="In what folder to save trained model in saved_models?")
 
