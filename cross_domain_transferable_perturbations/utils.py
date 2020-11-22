@@ -218,10 +218,11 @@ def img_noise(img_size, args, device, batch_size, channels=1):
 def save_snapshot_and_log(netG, foldname, target, attack_type,
                           train_dir, model_name, st="", verbose=False, logonly=False):
 
+    ds = train_dir.split("/")[-1]
+
     if logonly:
         logstr = 'saved_models/{}/{}_netG_{}_{}_{}_{}_rl.log'.format(foldname, foldname, target,
-                                                                     attack_type, model_name,
-                                                                     train_dir)
+                                                                     attack_type, model_name, ds)
         with open(logstr, "w+") as f:
             f.write(st + '\n')
 
@@ -229,7 +230,7 @@ def save_snapshot_and_log(netG, foldname, target, attack_type,
 
     savestr = 'saved_models/{}/{}_netG_{}_{}_{}_{}_{}_rl.pth'.format(foldname, foldname, target,
                                                                      attack_type, model_name,
-                                                                     train_dir, st)
+                                                                     ds, st)
     pp = 'saved_models/{}'.format(foldname)
     if not os.path.exists(pp):
         os.mkdir(pp)
