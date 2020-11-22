@@ -225,8 +225,8 @@ def save_snapshot_and_log(netG, foldname, target, attack_type,
     pp = 'saved_models/{}'.format(foldname)
 
     if iteration == 0 and os.path.exists(pp):
-        timestr = now.strftime("%d_%m-%H_%M")
-        os.rename(pp, pp + timestr + "_bak")
+        timestr = now.strftime("%d_%m-%H_%M-%S")
+        os.rename(pp, pp + "_" + timestr + "_bak")
         assert not os.path.exists(pp)
 
     if not os.path.exists(pp):
@@ -243,6 +243,7 @@ def save_snapshot_and_log(netG, foldname, target, attack_type,
 
         if iteration == 0 and os.path.exists(logstr):
             os.remove(logstr)
+            print("Removed old log file at ", logstr)
 
         with open(logstr, "a+") as f:
             f.write(st + '\n')

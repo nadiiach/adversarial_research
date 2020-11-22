@@ -212,7 +212,7 @@ for epoch in range(args.epochs):
         if iteration % 5000 == 0 and iteration != 0:
             if args.save:
                 utils.save_snapshot_and_log(netG, args.foldname, args.target,  args.attack_type,
-                                    args.train_dir, args.model_type, laststr="{}_iter_{}_bs"
+                                    args.train_dir, args.model_type, st="{}_iter_{}_bs"
                                     .format(iteration, args.batch_size), iteration=iteration)
             else:
                 print("Warning: model is not saved!")
@@ -232,7 +232,7 @@ for epoch in range(args.epochs):
 
     if args.save:
         utils.save_snapshot_and_log(netG, args.foldname, args.target,  args.attack_type,
-                            args.train_dir, args.model_type, laststr="{}_epoch".format(epoch),
+                            args.train_dir, args.model_type, st="{}_epoch".format(epoch),
                             iteration=iteration)
     else:
         print("Warning: model is not saved!")
