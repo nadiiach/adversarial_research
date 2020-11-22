@@ -20,6 +20,7 @@ parser.add_argument('--batch_size', type=int, default=8, help='Number of trainig
 parser.add_argument('--epochs', type=int, default=10, help='Number of training epochs')
 parser.add_argument('--lr', type=float, default=0.0002, help='Initial learning rate for adam')
 parser.add_argument('--eps', type=int, default=10, help='Perturbation Budget')
+parser.add_argument('--subset', type=int, help='Subset of dataset for testing')
 parser.add_argument('--model_type', type=str, default='vgg16',
             help='Model against GAN is trained: vgg16, vgg19, incv3, res152')
 parser.add_argument('--attack_type', type=str, default='img',
@@ -27,7 +28,6 @@ parser.add_argument('--attack_type', type=str, default='img',
 parser.add_argument('--target', type=int, default=-1, help='-1 if untargeted')
 parser.add_argument('--logdet', action='store_true', help="Van Neumann relaxation")
 parser.add_argument('--save', action='store_true', help="save models")
-parser.add_argument('--subset', type=int, help='Subset of dataset for testing')
 parser.add_argument('--foldname',  type=str, required=True,
                     help="In what folder to save trained model in saved_models?")
 
@@ -93,12 +93,19 @@ def normalize(t):
 
 train_dir = args.train_dir
 train_set = datasets.ImageFolder(train_dir, data_transform)
+
+if args.subset:
+    train_set = torch.utils.data.Subset(
+        train_set, np.random.choice(
+            len(train_set), args.subset, replace=False))
+    print("Sampled {} images".format(args.subset))
+
 train_loader = torch.utils.data.DataLoader(train_set,
                                            batch_size=args.batch_size,
                                            shuffle=True, num_workers=4,
                                            pin_memory=True)
 train_size = len(train_set)
-print('Training data size:', train_size)
+print('Number of batches:', train_size)
 
 # Loss
 criterion = nn.CrossEntropyLoss()

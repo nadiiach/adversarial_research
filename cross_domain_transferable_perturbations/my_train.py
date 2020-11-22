@@ -121,9 +121,9 @@ train_loader_others = torch.utils.data.DataLoader(train_set_others,
                                                   pin_memory=True)
 
 
-
+assert len(train_loader_vgg16_19_res152) == len(train_set_others)
 train_size = len(train_loader_vgg16_19_res152)
-print('Training data size:', train_size)
+print('Number of batches:', train_size)
 # Loss
 criterion = nn.CrossEntropyLoss()
 ####################
@@ -237,11 +237,12 @@ for epoch in range(args.epochs):
 
     discrimins = "_".join(list(discriminators_size_larger.keys()) + \
                           list(discriminators_size_smaller.keys()))
-    savestr = 'saved_models/new_netG_{}_{}_{}_{}_{}_rl.pth'.format(args.target,
-                                                                   args.attack_type,
-                                                                   discrimins,
-                                                                   args.train_dir,
-                                                                   epoch)
+
+
+    savestr = 'saved_models/{}/{}_netG_{}_{}_{}_{}_{}_rl.pth'.format(args.foldname, args.foldname,
+                                                                     args.target, args.attack_type,
+                                                                     discrimins, args.train_dir,
+                                                                     epoch)
 
     if args.save:
         torch.save(netG.state_dict(), savestr)
