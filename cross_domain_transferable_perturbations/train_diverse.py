@@ -10,9 +10,15 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
-from cross_domain_transferable_perturbations.generators import GeneratorResnet
-from cross_domain_transferable_perturbations.utils import *
 
+try:
+    from cross_domain_transferable_perturbations.generators import GeneratorResnet
+    from cross_domain_transferable_perturbations import utils
+    from cross_domain_transferable_perturbations.utils import *
+except:
+    from generators import GeneratorResnet
+    import utils
+    from utils import *
 
 parser = argparse.ArgumentParser(description='Cross Data Transferability')
 parser.add_argument('--train_dir', default='imagenet', help='comics, imagenet')
@@ -172,25 +178,24 @@ for epoch in range(args.epochs):
         loss.backward()
         optimG.step()
 
+        if i % 5000 == 0 and i != 0:
+            if args.save:
+                utils.save_snapshot(netG, args.foldname, args.target,  args.attack_type,
+                                    args.train_dir, args.model_type, "{}_iter_{}_bs"
+                                    .format(i, args.batch_size))
+            else:
+                print("Warning: model is not saved!")
+
         if i % 10 == 9:
             print('Epoch: {0} \t Batch: {1} \t loss: {2:.5f}'.format(
                 epoch, i, running_loss / 100))
             running_loss = 0
         running_loss += abs(loss.item())
 
-    if args.save:
-        savestr = 'saved_models/{}/{}_netG_{}_{}_{}_{}_{}_rl.pth'.format(args.foldname,
-                                                                         args.foldname,
-                                                                         args.target,
-                                                                         args.attack_type,
-                                                                         args.model_type,
-                                                                         args.train_dir,
-                                                                         epoch)
-        pp = 'saved_models/{}'.format(args.foldname)
-        if not os.path.exists(pp):
-            os.mkdir(pp)
 
-        torch.save(netG.state_dict(), savestr)
+    if args.save:
+        utils.save_snapshot(netG, args.foldname, args.target,  args.attack_type,
+                            args.train_dir, args.model_type, "{}_epoch".format(epoch))
     else:
         print("Warning: model is not saved!")
 

@@ -176,6 +176,10 @@ print('Label: {} \t Attack: {} dependent \t Model: {} \t '
                                                         args.model_type,
                                                         args.train_dir,
                                                         args.epochs))
+
+discrimins = "_".join(list(discriminators_size_larger.keys()) + \
+                      list(discriminators_size_smaller.keys()))
+
 for epoch in range(args.epochs):
     running_loss = 0
     for i in range(len(train_loader_vgg16_19_res152)):
@@ -231,28 +235,24 @@ for epoch in range(args.epochs):
         loss.backward()
         optimG.step()
 
+        if i % 5000 == 0 and i != 0:
+            if args.save:
+                utils.save_snapshot(netG, args.foldname, args.target,  args.attack_type,
+                                    args.train_dir, discrimins, "{}_iter_{}_bs"
+                                    .format(i, args.batch_size))
+            else:
+                print("Warning: model is not saved!")
+
         if i % 10 == 9:
             print('Epoch: {0} \t Batch: {1} \t loss: {2:.5f}'.format(
                 epoch, i, running_loss / 100))
             running_loss = 0
         running_loss += abs(loss.item())
 
-    discrimins = "_".join(list(discriminators_size_larger.keys()) + \
-                          list(discriminators_size_smaller.keys()))
-
-
+    # saving snapshorts for epochs
     if args.save:
-        savestr = 'saved_models/{}/{}_netG_{}_{}_{}_{}_{}_rl.pth'.format(args.foldname,
-                                                                         args.foldname,
-                                                                         args.target,
-                                                                         args.attack_type,
-                                                                         discrimins, args.train_dir,
-                                                                         epoch)
-        pp = 'saved_models/{}'.format(args.foldname)
-        if not os.path.exists(pp):
-            os.mkdir(pp)
-
-        torch.save(netG.state_dict(), savestr)
+        utils.save_snapshot(netG, args.foldname, args.target,  args.attack_type,
+                            args.train_dir, discrimins, "{}_epoch".format(epoch))
     else:
         print("Warning: model is not saved!")
 

@@ -1,6 +1,6 @@
 import torch
 import torchvision
-
+import os
 try:
     from cross_domain_transferable_perturbations.generators import GeneratorResnet
 except:
@@ -213,3 +213,18 @@ def img_noise(img_size, args, device, batch_size, channels=1):
     noise_tensor_tr = torch.from_numpy(im_noise_tr).\
                 type(torch.FloatTensor).to(device)
     return noise_tensor_tr
+
+
+def save_snapshot(netG, foldname, target,  attack_type,
+                  train_dir, model_name, laststr, verbose=False):
+    savestr = 'saved_models/{}/{}_netG_{}_{}_{}_{}_{}_rl.pth'.format(foldname, foldname, target,
+                                                                     attack_type, model_name,
+                                                                     train_dir, laststr)
+    pp = 'saved_models/{}'.format(foldname)
+    if not os.path.exists(pp):
+        os.mkdir(pp)
+
+    torch.save(netG.state_dict(), savestr)
+    if not verbose:
+        print("Model saved to {}".format(savestr))
+
