@@ -29,8 +29,7 @@ parser.add_argument('--lr', type=float, default=0.0002, help='Initial learning r
 parser.add_argument('--eps', type=int, default=10, help='Perturbation Budget')
 parser.add_argument('--subset', type=int, help='Subset of dataset for testing')
 parser.add_argument('--model_type', type=str, default='res152_incv3',
-                        help='Model against GAN is trained: vgg16, '
-                         'vgg19, incv3, res152')
+                        help='Model against GAN is trained: vgg16, vgg19, incv3, res152')
 parser.add_argument('--attack_type', type=str, default='img',
                     help='Training is either img/noise dependent')
 parser.add_argument('--target', type=int, default=-1, help='-1 if untargeted')

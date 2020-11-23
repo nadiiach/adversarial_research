@@ -39,6 +39,8 @@ def main():
                         help='How many times try to attack', default=10)
     parser.add_argument('--foldname', type=str, required=True,
                         help="From what folder should you load GAN?")
+    parser.add_argument('--pth_name', type=str)
+    parser.add_argument('--subset', type=int, help='Subset of dataset for testing')
     args = parser.parse_args()
     print(args)
 
@@ -85,6 +87,13 @@ def main():
     #test_dir ="/mnt/Vol2TBSabrentRoc/Projects/adversarial_research/datasets/imagenet/val"
     print(os.path.dirname(os.path.realpath(__file__)))
     test_set = datasets.ImageFolder(test_dir, data_transform)
+
+    if args.subset:
+        test_set = torch.utils.data.Subset(
+            test_set, np.random.choice(
+                len(test_set), args.subset, replace=False))
+        print("Sampled {} images".format(args.subset))
+
     test_size = len(test_set)
     print('Test data size:', test_size)
 
