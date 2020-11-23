@@ -38,6 +38,7 @@ def main():
                         help='Relativistic or Simple GAN', default=True)
     parser.add_argument('--foldname', type=str, required=True,
                         help="From what folder should you load GAN?")
+    parser.add_argument('--pth_name', type=str)
     args = parser.parse_args()
     print(args)
 

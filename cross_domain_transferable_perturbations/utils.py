@@ -39,7 +39,7 @@ def load_gan(args, prefix, channels=3):
     print('Label: {} \t Attack: {} dependent \t Model: {} '
           '\t Distribution: {} \t Saving instance: {}'.format(args.target, args.attack_type,
                                                                args.model_type, ds, args.epochs))
-    path = _get_path(args, prefix, ds)
+    path = _get_path(args, prefix, ds) if not args.pth_name else args.pth_name
     #path ="/mnt/Vol2TBSabrentRoc/Projects/adversarial_research/cross_domain_transferable_perturbations/saved_models/test_frobdiff/test_frobdiff_netG_-1_img_vgg16_imagenet_0_epoch_rl.pth"
     netG.load_state_dict(torch.load(path))
 
