@@ -1,44 +1,34 @@
 import argparse
-import os
-import numpy as np
-import matplotlib.pyplot as plt
-
-import torchvision
-import torch
-import torch.nn as nn
-import torch.optim as optim
 from torch.utils.data import DataLoader
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
 import torchvision.utils as vutils
-from cross_domain_transferable_perturbations.gaussian_smoothing import *
-from cross_domain_transferable_perturbations.utils import *
-from cross_domain_transferable_perturbations.process_imagenet import *
+try:
+    from cross_domain_transferable_perturbations.gaussian_smoothing import *
+    from cross_domain_transferable_perturbations.utils import *
+    from cross_domain_transferable_perturbations.process_imagenet import *
+except:
+    from gaussian_smoothing import *
+    from utils import *
+    from process_imagenet import *
+
 def main():
     parser = argparse.ArgumentParser(description='Cross Data Transferability')
-    parser.add_argument('--train_dir', default='imagenet',
-                        help='Generator Training Data: paintings, comics, ')
-    parser.add_argument('--test_dir', default='datasets/imagenet/val',
+    parser.add_argument('--test_dir', default='../datasets/imagenet/val',
                         help='ImageNet Validation Data')
-    parser.add_argument('--is_nips', action='store_true',
-                        help='Evaluation on NIPS data')
+    parser.add_argument('--is_nips', action='store_true', help='Evaluation on NIPS data')
     parser.add_argument('--measure_adv', action='store_true',
-                        help='If not set then measuring only clean accuracy',
-                        default=True)
-    parser.add_argument('--batch_size', type=int, default=1,
-                        help='Batch Size')
-    parser.add_argument('--epochs', type=int, default=9,
-                        help='Which Saving Instance to Evaluate')
-    parser.add_argument('--eps', type=int, default=10,
-                        help='Perturbation Budget')
+                        help='If not set then measuring only clean accuracy', default=True)
+    parser.add_argument('--batch_size', type=int, default=1, help='Batch Size')
+    parser.add_argument('--epochs', type=int, default=9, help='Which Saving Instance to Evaluate')
+    parser.add_argument('--eps', type=int, default=10, help='Perturbation Budget')
     parser.add_argument('--model_type', type=str, default='vgg16',
                         help='Model against GAN is trained: vgg16, '
                              'vgg19, incv3, res152')
     parser.add_argument('--model_t', type=str, default='res152',
                         help='Model under attack : vgg16, vgg19, '
                              'incv3, res152, res50, dense201, sqz')
-    parser.add_argument('--target', type=int, default=-1,
-                        help='-1 if untargeted')
+    parser.add_argument('--target', type=int, default=-1, help='-1 if untargeted')
     parser.add_argument('--attack_type', type=str, default='img',
                         help='Training is either img/noise dependent')
     parser.add_argument('--gk', action='store_true',
@@ -47,6 +37,8 @@ def main():
                         help='Relativstic or Simple GAN', default=True)
     parser.add_argument('--attempts', type=int,
                         help='How many times try to attack', default=10)
+    parser.add_argument('--foldname', type=str, required=True,
+                        help="From what folder should you load GAN?")
     args = parser.parse_args()
     print(args)
 
@@ -65,7 +57,7 @@ def main():
         scale_size = 300
         img_size = 300 #299
 
-    netG = load_gan(args, "div", channels=4)
+    netG = load_gan(args, args.foldname, channels=4)
     netG.to(device)
     netG.eval()
 
@@ -90,15 +82,11 @@ def main():
         return t
 
     test_dir = args.test_dir
+    #test_dir ="/mnt/Vol2TBSabrentRoc/Projects/adversarial_research/datasets/imagenet/val"
+    print(os.path.dirname(os.path.realpath(__file__)))
     test_set = datasets.ImageFolder(test_dir, data_transform)
     test_size = len(test_set)
     print('Test data size:', test_size)
-
-    # Fix labels if needed
-    if args.is_nips:
-        test_set = fix_labels_nips(test_set, pytorch=True)
-    else:
-        test_set = fix_labels(test_set, os.path.join(args.test_dir, "val.txt"))
 
     test_loader = torch.utils.data.DataLoader(test_set,
                                               batch_size=args.batch_size,
@@ -115,7 +103,7 @@ def main():
     # Evaluation
     adv_acc = 0
     clean_acc = 0
-    fool_rate = 0
+    disagreement_rate = 0
 
     print("Test loader {}".format(test_loader))
 
@@ -155,17 +143,22 @@ def main():
         adv_res = 0 if adv_sum < args.attempts else 1
         adv_acc += adv_res
         fool_out = torch.sum(adv_out.argmax(dim=-1) != clean_out.argmax(dim=-1)).item()
-        fool_rate += 1 if fool_out >= 1 else 0
-        if i == 0:
+        disagreement_rate += 1 if fool_out >= 1 else 0
+
+        if i % 1000 == 0:
+            rooty = "saved_models/{}/images".format(args.foldname)
+            if not os.path.exists(rooty):
+                os.mkdir(rooty)
+
             vutils.save_image(
                 vutils.make_grid(adv_noise, normalize=True, scale_each=True),
-                'noise.png')
+                                '{}/noise_{}.png'.format(rooty, i))
             vutils.save_image(
                 vutils.make_grid(adv, normalize=True, scale_each=True),
-                'adv.png')
+                                '{}/adv_{}.png'.format(rooty, i))
             vutils.save_image(
                 vutils.make_grid(img, normalize=True, scale_each=True),
-                'org.png')
+                                '{}/org_{}.png'.format(rooty, i))
 
         if i % 100 == 0:
             if args.measure_adv:
@@ -178,6 +171,14 @@ def main():
             test_size = 10000
             break
 
-    print('Clean:{0:.3%}\t Adversarial :{1:.3%}\t Fooling Rate:{2:.3%}'.format(
-        clean_acc / test_size, adv_acc / test_size, fool_rate / test_size))
+    cleanaccuracy = clean_acc / test_size
+    aversarialaccuracy = adv_acc / test_size
+    disagreement = disagreement_rate / test_size
+    foolrate = 1 - (aversarialaccuracy/cleanaccuracy)
 
+    print('Clean:{0:.3%}\t Adversarial :{1:.3%}\t Fool Rate :{2:.3%}\t Disagreement Rate:{3:.3%}'
+        .format(cleanaccuracy, aversarialaccuracy, foolrate, disagreement))
+
+
+if __name__ == "__main__":
+    main()

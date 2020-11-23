@@ -16,26 +16,13 @@ now = datetime.now() # current date and time
 
 # Load a particular generator
 
-def _get_path(args, prefix):
+def _get_path(args, prefix, ds):
     if args.rl:
-        path = 'cross_domain_transferable_perturbations/' \
-               'saved_models/{}netG_{}_{}_{}_{}_{}_rl.pth'.format(
-                    "{}_".format(prefix) if len(prefix) > 0 else "",
-                    args.target,
-                    args.attack_type,
-                    args.model_type,
-                    args.train_dir,
-                    args.epochs)
+        path = 'saved_models/{}/{}_netG_{}_{}_{}_{}_{}_epoch_rl.pth'.format(
+                    prefix, prefix, args.target, args.attack_type, args.model_type, ds, args.epochs)
     else:
-        path = '/mnt/Vol2TBSabrentRoc/Projects/adversarial_research/' \
-                'cross_domain_transferable_perturbations/'\
-                'saved_models/{}netG_{}_{}_{}_{}_{}.pth'.format(
-                        "{}_".format(prefix) if len(prefix) > 0 else "",
-                        args.target,
-                        args.attack_type,
-                        args.model_type,
-                        args.train_dir,
-                        args.epochs)
+        path = 'saved_models/{}/{}_netG_{}_{}_{}_{}_{}_epoch.pth'.format(
+                    prefix, prefix, args.target, args.attack_type, args.model_type, ds, args.epochs)
     return path
 
 def load_gan(args, prefix, channels=3):
@@ -44,24 +31,23 @@ def load_gan(args, prefix, channels=3):
         netG = GeneratorResnet(inception=True, channels=channels)
     else:
         netG = GeneratorResnet(channels=channels)
+
+    di = args.test_dir if args.test_dir else args.train_dir
+    if "imagenet" in di:
+        ds = "imagenet"
+
     print('Label: {} \t Attack: {} dependent \t Model: {} '
-          '\t Distribution: {} \t Saving instance: {}'.format(args.target,
-                                                               args.attack_type,
-                                                               args.model_type,
-                                                               args.train_dir,
-                                                               args.epochs))
-    try:
-        path = _get_path(args, prefix)
-        netG.load_state_dict(torch.load(path))
-    except:
-        print("{} failed".format(path))
-        path = _get_path(args, prefix)
-        netG.load_state_dict(torch.load(path))
+          '\t Distribution: {} \t Saving instance: {}'.format(args.target, args.attack_type,
+                                                               args.model_type, ds, args.epochs))
+    path = _get_path(args, prefix, ds)
+    #path ="/mnt/Vol2TBSabrentRoc/Projects/adversarial_research/cross_domain_transferable_perturbations/saved_models/test_frobdiff/test_frobdiff_netG_-1_img_vgg16_imagenet_0_epoch_rl.pth"
+    netG.load_state_dict(torch.load(path))
 
     print("Loaded {}".format(path))
     return netG
 
-
+#saved_models/test_frobdiff/test_frobdiff_netG_-1_img_vgg16_imagenet_0_epoch_rl.pth
+#saved_models/test_frobdiff/test_frobdiff_netG_-1_img_vgg16_imagenet_0_epoch_rl.pth
 # Load ImageNet model to evaluate
 def load_model(args):
     # Load Targeted Model

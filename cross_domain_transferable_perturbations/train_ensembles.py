@@ -149,8 +149,7 @@ if args.attack_type == 'noise':
 
     np.save('saved_models/noise_{}_{}_{}_others_rl'.format(args.target,
                                                            args.model_type,
-                                                           args.train_dir),
-            noise_others)
+                                                           args.train_dir), noise_others)
 
     im_noise_vgg16_19_res152 = np.reshape(noise_vgg16_19_res152,
                                           (3, img_size_vgg16_19_res152,
