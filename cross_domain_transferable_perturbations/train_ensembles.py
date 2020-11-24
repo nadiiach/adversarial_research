@@ -233,7 +233,7 @@ for epoch in range(args.epochs):
             losses = []
             for adv_out, img_out, label in zip(advs_logits_out, imgs_logits_out, clean_labels):
                 losses.append(-criterion(adv_out - img_out, label))
-            loss = min(losses)
+            loss = max(losses) #min?
 
         loss.backward()
         optimG.step()
