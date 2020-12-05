@@ -16,33 +16,37 @@ now = datetime.now() # current date and time
 
 # Load a particular generator
 
-def _get_path(args, prefix, ds):
+def _get_path(target, attack_type, model_type, epochs, prefix, ds):
     if args.rl:
         path = 'saved_models/{}/{}_netG_{}_{}_{}_{}_{}_epoch_rl.pth'.format(
-                    prefix, prefix, args.target, args.attack_type, args.model_type, ds, args.epochs)
+                    prefix, prefix, target, attack_type, model_type, ds, epochs)
     else:
         path = 'saved_models/{}/{}_netG_{}_{}_{}_{}_{}_epoch.pth'.format(
-                    prefix, prefix, args.target, args.attack_type, args.model_type, ds, args.epochs)
+                    prefix, prefix, target, attack_type, model_type, ds, epochs)
     return path
 
-def load_gan(args, prefix, channels=3):
+
+def testload_gan():
+    pass
+
+def load_gan(model_type, data_dir, target, attack_type, epochs, pth_name, prefix=None, path=None, channels=3):
+    assert prefix or path 
     # Load Generator
-    if args.model_type == 'incv3':
+    if model_type == 'incv3':
         netG = GeneratorResnet(inception=True, channels=channels)
     else:
         netG = GeneratorResnet(channels=channels)
 
-    di = args.test_dir if args.test_dir else args.train_dir
-    if "imagenet" in di:
+    if "imagenet" in data_dir:
         ds = "imagenet"
 
     print('Label: {} \t Attack: {} dependent \t Model: {} '
-          '\t Distribution: {} \t Saving instance: {}'.format(args.target, args.attack_type,
-                                                               args.model_type, ds, args.epochs))
-
-    path = _get_path(args, prefix, ds) if not args.pth_name \
-        else os.path.join("saved_models/{}".format(prefix), args.pth_name)
-    #path ="/mnt/Vol2TBSabrentRoc/Projects/adversarial_research/cross_domain_transferable_perturbations/saved_models/test_frobdiff/test_frobdiff_netG_-1_img_vgg16_imagenet_0_epoch_rl.pth"
+          '\t Distribution: {} \t Saving instance: {}'.format(target, attack_type, 
+                                                              model_type, ds, epochs))
+    if not path:
+        path = _get_path(target, attack_type, model_type, epochs, prefix, ds) \
+            if not pth_name \
+            else os.path.join("saved_models/{}".format(prefix), pth_name)
     netG.load_state_dict(torch.load(path))
 
     print("Loaded {}".format(path))
